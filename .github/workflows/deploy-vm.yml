@@ -1,0 +1,126 @@
+name: Deploy VM
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: Image tag to deploy
+        required: true
+        default: latest
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Load runtime secret fallback from GitHub Secrets
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
+          REGISTRY_LOGIN_SERVER: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+          REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+        run: |
+          set -euo pipefail
+
+          for key in POSTGRES_PASSWORD GRAFANA_ADMIN_PASSWORD REGISTRY_LOGIN_SERVER REGISTRY_USERNAME REGISTRY_PASSWORD; do
+            value="${!key}"
+            if [ -n "${value}" ]; then
+              echo "::add-mask::${value}"
+              printf '%s=%s\n' "${key}" "${value}" >> "${GITHUB_ENV}"
+            fi
+          done
+
+      - name: Azure login for Azure Key Vault access
+        if: ${{ secrets.AZURE_CLIENT_ID != '' && secrets.AZURE_TENANT_ID != '' && secrets.AZURE_SUBSCRIPTION_ID != '' && secrets.AZURE_KEYVAULT_NAME != '' }}
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Read deployment secrets from Azure Key Vault
+        if: ${{ secrets.AZURE_CLIENT_ID != '' && secrets.AZURE_TENANT_ID != '' && secrets.AZURE_SUBSCRIPTION_ID != '' && secrets.AZURE_KEYVAULT_NAME != '' }}
+        env:
+          AZURE_CORE_OUTPUT: none
+          AZURE_KEYVAULT_NAME: ${{ secrets.AZURE_KEYVAULT_NAME }}
+        uses: azure/CLI@v1
+        with:
+          inlineScript: |
+            set -euo pipefail
+
+            fetch_secret() {
+              local secret_name="$1"
+              local secret_value
+              secret_value="$(az keyvault secret show --vault-name "${AZURE_KEYVAULT_NAME}" --name "${secret_name}" --query value -o tsv 2>/dev/null || true)"
+
+              if [ -n "${secret_value}" ]; then
+                echo "::add-mask::${secret_value}"
+                printf '%s=%s\n' "${secret_name}" "${secret_value}" >> "${GITHUB_ENV}"
+                echo "Loaded ${secret_name} from Azure Key Vault."
+              else
+                echo "Azure Key Vault did not return ${secret_name}. Keeping the GitHub Secrets fallback if it exists."
+              fi
+            }
+
+            fetch_secret POSTGRES_PASSWORD
+            fetch_secret GRAFANA_ADMIN_PASSWORD
+            fetch_secret REGISTRY_LOGIN_SERVER
+            fetch_secret REGISTRY_USERNAME
+            fetch_secret REGISTRY_PASSWORD
+
+      - name: Validate deployment secret availability
+        run: |
+          set -euo pipefail
+
+          missing=0
+
+          for key in POSTGRES_PASSWORD GRAFANA_ADMIN_PASSWORD; do
+            if [ -z "${!key:-}" ]; then
+              echo "Missing required deployment secret: ${key}"
+              missing=1
+            fi
+          done
+
+          if [ "${missing}" -eq 1 ]; then
+            echo "Provide the missing value in Azure Key Vault or GitHub Secrets fallback."
+            exit 1
+          fi
+
+      - name: Show selected secret source
+        run: |
+          set -euo pipefail
+
+          if [ -n "${{ secrets.AZURE_CLIENT_ID }}" ] && [ -n "${{ secrets.AZURE_TENANT_ID }}" ] && [ -n "${{ secrets.AZURE_SUBSCRIPTION_ID }}" ] && [ -n "${{ secrets.AZURE_KEYVAULT_NAME }}" ]; then
+            echo "Using Azure Key Vault as the preferred runtime secret source."
+          else
+            echo "Using GitHub Secrets fallback for runtime secrets."
+          fi
+
+      - name: Deploy selected tag to VM
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          IMAGE_TAG: ${{ inputs.image_tag }}
+          VM_APP_DIR: ${{ secrets.VM_APP_DIR }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+          GRAFANA_ADMIN_PASSWORD: ${{ env.GRAFANA_ADMIN_PASSWORD }}
+          REGISTRY_LOGIN_SERVER: ${{ env.REGISTRY_LOGIN_SERVER }}
+          REGISTRY_USERNAME: ${{ env.REGISTRY_USERNAME }}
+          REGISTRY_PASSWORD: ${{ env.REGISTRY_PASSWORD }}
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          envs: IMAGE_TAG,VM_APP_DIR,POSTGRES_PASSWORD,GRAFANA_ADMIN_PASSWORD,REGISTRY_LOGIN_SERVER,REGISTRY_USERNAME,REGISTRY_PASSWORD
+          script: |
+            set -e
+            cd "${VM_APP_DIR}"
+            bash deploy/deploy.sh "${IMAGE_TAG}"

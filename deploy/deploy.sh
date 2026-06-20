@@ -1,0 +1,129 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+SCRIPT_DIR="$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
+ENV_FILE="${PROJECT_DIR}/.env"
+SECRETS_FILE="${PROJECT_DIR}/.env.secrets"
+IMAGE_TAG_INPUT="${1:-}"
+
+write_runtime_secrets_file() {
+  local wrote_secret=0
+
+  for key in POSTGRES_PASSWORD GRAFANA_ADMIN_PASSWORD REGISTRY_LOGIN_SERVER REGISTRY_USERNAME REGISTRY_PASSWORD; do
+    if [[ -n "${!key:-}" ]]; then
+      if [[ "${wrote_secret}" -eq 0 ]]; then
+        : > "${SECRETS_FILE}"
+      fi
+      printf '%s=%s\n' "${key}" "${!key}" >> "${SECRETS_FILE}"
+      if [[ "${key}" == "GRAFANA_ADMIN_PASSWORD" ]]; then
+        printf 'GF_SECURITY_ADMIN_PASSWORD=%s\n' "${!key}" >> "${SECRETS_FILE}"
+      fi
+      wrote_secret=1
+    fi
+  done
+
+  if [[ -n "${GRAFANA_ADMIN_USER:-}" ]]; then
+    if [[ "${wrote_secret}" -eq 0 ]]; then
+      : > "${SECRETS_FILE}"
+      wrote_secret=1
+    fi
+    printf 'GF_SECURITY_ADMIN_USER=%s\n' "${GRAFANA_ADMIN_USER}" >> "${SECRETS_FILE}"
+  fi
+
+  if [[ "${wrote_secret}" -eq 1 ]]; then
+    chmod 600 "${SECRETS_FILE}"
+    echo "Wrote runtime secrets to ${SECRETS_FILE}."
+    return
+  fi
+
+  if [[ ! -f "${SECRETS_FILE}" ]]; then
+    touch "${SECRETS_FILE}"
+    chmod 600 "${SECRETS_FILE}"
+  fi
+}
+
+load_registry_settings_from_secrets_file() {
+  local key
+  local value
+
+  [[ -f "${SECRETS_FILE}" ]] || return 0
+
+  while IFS='=' read -r key value; do
+    case "${key}" in
+      REGISTRY_LOGIN_SERVER|REGISTRY_USERNAME|REGISTRY_PASSWORD)
+        if [[ -z "${!key:-}" && -n "${value}" ]]; then
+          export "${key}=${value}"
+        fi
+        ;;
+    esac
+  done < "${SECRETS_FILE}"
+}
+
+validate_required_values() {
+  local missing=0
+
+  for required in APP_IMAGE IMAGE_TAG POSTGRES_DB POSTGRES_USER POSTGRES_HOST POSTGRES_PORT REDIS_HOST REDIS_PORT GRAFANA_ADMIN_USER; do
+    if [[ -z "${!required:-}" ]]; then
+      echo "Missing required value: ${required}"
+      missing=1
+    fi
+  done
+
+  for required_secret in POSTGRES_PASSWORD GRAFANA_ADMIN_PASSWORD; do
+    if ! grep -q "^${required_secret}=" "${SECRETS_FILE}" 2>/dev/null && [[ -z "${!required_secret:-}" ]]; then
+      echo "Missing required secret value: ${required_secret}"
+      missing=1
+    fi
+  done
+
+  if [[ "${missing}" -eq 1 ]]; then
+    echo "Update ${ENV_FILE}, ${SECRETS_FILE}, or the calling environment and try again."
+    exit 1
+  fi
+}
+
+if [[ ! -f "${ENV_FILE}" ]]; then
+  echo "Missing ${ENV_FILE}. Copy deploy/example.env or .env.example to .env first."
+  exit 1
+fi
+
+write_runtime_secrets_file
+
+set -a
+source "${ENV_FILE}"
+set +a
+
+load_registry_settings_from_secrets_file
+
+if [[ -n "${IMAGE_TAG_INPUT}" ]]; then
+  export IMAGE_TAG="${IMAGE_TAG_INPUT}"
+fi
+
+validate_required_values
+
+echo "Deploying ${APP_IMAGE}:${IMAGE_TAG}"
+
+if [[ -n "${REGISTRY_LOGIN_SERVER:-}" && -n "${REGISTRY_USERNAME:-}" && -n "${REGISTRY_PASSWORD:-}" ]]; then
+  echo "Logging in to container registry ${REGISTRY_LOGIN_SERVER}..."
+  printf '%s' "${REGISTRY_PASSWORD}" | docker login "${REGISTRY_LOGIN_SERVER}" --username "${REGISTRY_USERNAME}" --password-stdin
+fi
+
+cd "${PROJECT_DIR}"
+docker compose -f docker-compose.vm.yml pull app
+docker compose -f docker-compose.vm.yml up -d
+
+echo "Running smoke tests..."
+for attempt in 1 2 3 4 5 6; do
+  if curl -fsS http://127.0.0.1/health >/dev/null && curl -fsS http://127.0.0.1/ready >/dev/null; then
+    echo "Deployment succeeded."
+    exit 0
+  fi
+  echo "Smoke test attempt ${attempt} failed. Waiting for services..."
+  sleep 5
+done
+
+echo "Deployment smoke test failed. Showing recent logs..."
+docker compose -f docker-compose.vm.yml logs app --tail=50 || true
+docker compose -f docker-compose.vm.yml logs nginx --tail=50 || true
+exit 1
