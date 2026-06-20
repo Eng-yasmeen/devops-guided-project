@@ -27,8 +27,11 @@ For the guided project, keep the VM connection values in GitHub Secrets:
 
 - `VM_HOST`
 - `VM_USER`
-- `VM_SSH_KEY`
+- `VM_SSH_KEY_B64` preferred
+- `VM_SSH_KEY` optional fallback
 - `VM_APP_DIR`
+
+`VM_SSH_KEY_B64` should contain the base64-encoded PEM file content with line breaks removed.
 
 Use Azure Key Vault for the runtime secrets by configuring these GitHub Secrets for Azure login:
 
@@ -89,6 +92,20 @@ That validation confirms:
 - `/health`
 - `/ready`
 - `/version` deployment metadata
+
+If you used the same Linux machine earlier for the local training stack, stop that stack before the VM deployment path so ports `80`, `3000`, and `9090` are free for the VM runtime layout:
+
+```bash
+docker compose down -v
+```
+
+If you are cloning this repository directly onto the VM, make sure the VM has access to the repository first. A private repository will require either GitHub authentication on the VM or a source copy step from a workstation.
+
+If you need the source-copy path, create a clean archive from your workstation first so macOS metadata files do not break Linux services such as Grafana provisioning:
+
+```bash
+bash scripts/package-vm-source.sh
+```
 
 ## Next Step
 

@@ -4,15 +4,27 @@
 
 Use Grafana Explore and CLI logs to investigate real requests.
 
-## Problem Scenario
+## Why This Lab Matters
 
-Traffic is hitting the system, but you need request-level visibility.
+Metrics can tell students that something changed, but logs show the exact request. This lab teaches request-level troubleshooting with both the UI and the command line.
+
+## Before You Start
+
+Keep the local stack running.
+
+Open:
+
+- the app GUI at `http://localhost:8080`
+- Grafana at `http://localhost:3000`
+
+If no requests were sent yet, generate a few from the GUI first so logs exist.
 
 ## Files Used
 
 - `monitoring/loki/loki-config.yml`
 - `monitoring/promtail/promtail-config.yml`
 - `app/src/logger.js`
+- `logs/app/app.log`
 - `logs/nginx/access.log`
 - `logs/nginx/error.log`
 
@@ -28,23 +40,27 @@ tail -f logs/nginx/error.log
 bash scripts/validate-observability.sh
 ```
 
-## GUI Actions to Click
+## What To Do
 
-- Generate Slow Request
-- Generate Error
-- Load Items from PostgreSQL
-- Test Redis Cache
+1. Click `Generate Slow Request`.
+2. Click `Generate Error`.
+3. Click `Load Items from PostgreSQL`.
+4. Click `Test Redis Cache`.
+5. In Grafana Explore, find the app logs for `/slow` and `/error`.
+6. In Grafana Explore, find the matching Nginx logs.
+7. Compare those results with `docker compose logs`.
 
 ## Expected Output
 
 - app logs appear in Grafana Explore
-- Nginx access/error logs appear in Grafana Explore
-- `/error` creates status code 500
+- Nginx access and error logs appear in Grafana Explore
+- `/error` creates a `500` response
 - `/slow` creates visible latency
+- students can correlate one request across GUI action, Nginx log, and app log
 
 ## Checkpoint Questions
 
-- Which GUI action generated the 500 error?
+- Which GUI action generated the `500` error?
 - Which request was slow?
 - Did the request reach Nginx?
 - Did the request reach the app?
@@ -54,18 +70,27 @@ bash scripts/validate-observability.sh
 ## Common Issues
 
 - Grafana Explore opens before Promtail catches up
-- `logs/app/app.log` not created yet because no request was sent
+- `logs/app/app.log` does not exist yet because no request was sent
+- students search only one log source and miss the full request cycle
 
 ## Team Task Split
 
 - Student 1 generates traffic from the GUI
 - Student 2 uses Grafana Explore
 - Student 3 uses CLI logs
-- Student 4 compares the findings
+- Student 4 compares the findings and traces the full request cycle
 
 ## Instructor Checkpoint
 
-Ask every team to show one slow request and one 500 request in both the UI and the CLI.
+Ask every team to show one slow request and one `500` request in both the UI and the CLI, then explain why both views are useful.
+
+## Validation
+
+Run:
+
+```bash
+bash scripts/validate-observability.sh
+```
 
 ## Next Step
 

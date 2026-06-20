@@ -259,6 +259,7 @@ Workflows:
 - deploys a selected image tag to a VM over SSH
 - reads runtime secrets from Azure Key Vault when Azure OIDC is configured
 - falls back to GitHub Secrets when Azure Key Vault is not ready yet
+- expects `VM_HOST`, `VM_USER`, `VM_APP_DIR`, and `VM_SSH_KEY_B64` as the cleanest GitHub SSH secret path
 
 ## VM Deployment
 
@@ -274,6 +275,13 @@ For the GitHub Actions deploy path:
 - keep VM access values in GitHub Secrets
 - use Azure Key Vault as the preferred runtime secret source
 - keep matching GitHub Secrets as the fallback path for classroom continuity
+
+Recommended VM access GitHub Secrets:
+
+- `VM_HOST`
+- `VM_USER`
+- `VM_APP_DIR`
+- `VM_SSH_KEY_B64` preferred, or `VM_SSH_KEY`
 
 Recommended Azure Key Vault secret names for this project:
 
@@ -296,6 +304,14 @@ After deployment, run:
 ```bash
 bash scripts/validate-vm-deployment.sh http://YOUR_VM_PUBLIC_IP
 ```
+
+If you need to copy the repository to the VM from a workstation instead of cloning it on the VM, create a clean archive first:
+
+```bash
+bash scripts/package-vm-source.sh
+```
+
+This avoids macOS metadata files such as `._*` that can break Linux-side Grafana provisioning.
 
 ## Cleanup
 

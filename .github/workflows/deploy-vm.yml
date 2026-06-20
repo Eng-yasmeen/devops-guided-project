@@ -24,6 +24,11 @@ jobs:
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       AZURE_KEYVAULT_NAME: ${{ secrets.AZURE_KEYVAULT_NAME }}
+      VM_HOST: ${{ secrets.VM_HOST }}
+      VM_USER: ${{ secrets.VM_USER }}
+      VM_APP_DIR: ${{ secrets.VM_APP_DIR }}
+      VM_SSH_KEY: ${{ secrets.VM_SSH_KEY }}
+      VM_SSH_KEY_B64: ${{ secrets.VM_SSH_KEY_B64 }}
 
     steps:
       - name: Load runtime secret fallback from GitHub Secrets
@@ -100,6 +105,29 @@ jobs:
             exit 1
           fi
 
+      - name: Validate VM connection settings
+        run: |
+          set -euo pipefail
+
+          missing=0
+
+          for key in VM_HOST VM_USER VM_APP_DIR; do
+            if [ -z "${!key:-}" ]; then
+              echo "Missing required VM setting: ${key}"
+              missing=1
+            fi
+          done
+
+          if [ -z "${VM_SSH_KEY_B64:-}" ] && [ -z "${VM_SSH_KEY:-}" ]; then
+            echo "Missing VM SSH key. Set VM_SSH_KEY_B64 or VM_SSH_KEY in GitHub Secrets."
+            missing=1
+          fi
+
+          if [ "${missing}" -eq 1 ]; then
+            echo "Add the missing VM settings in GitHub Secrets before running Deploy VM."
+            exit 1
+          fi
+
       - name: Show selected secret source
         run: |
           set -euo pipefail
@@ -113,10 +141,6 @@ jobs:
       - name: Deploy selected tag to VM
         env:
           IMAGE_TAG: ${{ inputs.image_tag }}
-          VM_HOST: ${{ secrets.VM_HOST }}
-          VM_USER: ${{ secrets.VM_USER }}
-          VM_SSH_KEY_B64: ${{ secrets.VM_SSH_KEY_B64 }}
-          VM_APP_DIR: ${{ secrets.VM_APP_DIR }}
           POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
           GRAFANA_ADMIN_PASSWORD: ${{ env.GRAFANA_ADMIN_PASSWORD }}
           REGISTRY_LOGIN_SERVER: ${{ env.REGISTRY_LOGIN_SERVER }}
@@ -127,8 +151,17 @@ jobs:
 
           key_file="${RUNNER_TEMP}/vm-deploy-key.pem"
           ssh_config_file="${RUNNER_TEMP}/vm-ssh-config"
-          printf '%s' "${VM_SSH_KEY_B64}" | base64 --decode > "${key_file}"
+
+          if [ -n "${VM_SSH_KEY_B64:-}" ]; then
+            printf '%s' "${VM_SSH_KEY_B64}" | tr -d '\r\n' | base64 --decode > "${key_file}"
+            echo "Loaded VM SSH key from VM_SSH_KEY_B64."
+          else
+            printf '%s\n' "${VM_SSH_KEY}" | sed 's/\r$//' > "${key_file}"
+            echo "Loaded VM SSH key from VM_SSH_KEY."
+          fi
+
           chmod 600 "${key_file}"
+          ssh-keygen -y -f "${key_file}" >/dev/null
 
           cat > "${ssh_config_file}" <<EOF
           Host vm-target
@@ -138,6 +171,8 @@ jobs:
             StrictHostKeyChecking no
             UserKnownHostsFile /dev/null
           EOF
+
+          ssh -F "${ssh_config_file}" vm-target "echo SSH connection to ${VM_HOST} succeeded."
 
           ssh -F "${ssh_config_file}" vm-target <<EOF
           export IMAGE_TAG='${IMAGE_TAG}'

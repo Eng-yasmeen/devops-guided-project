@@ -2,17 +2,28 @@
 
 ## Goal
 
-Start the stack and use the GUI as the main traffic generator.
+Start the local stack and use the GUI as the main traffic generator.
 
-## Problem Scenario
+## Why This Lab Matters
 
-You need a fast way to see whether the service is alive before you inspect deeper layers.
+Before students inspect logs, metrics, CI, or deployment, they need one stable way to interact with the system. The GUI gives them a simple operational entry point and a repeatable way to generate requests.
+
+## Before You Start
+
+Complete:
+
+- [Prerequisites and Validation](../docs/01-prerequisites-and-validation.md)
+- `bash scripts/validate-prerequisites.sh`
+
+Keep the root [README](../README.md) open for URLs and high-level context.
 
 ## Files Used
 
 - `.env.example`
 - `docker-compose.yml`
-- `app/src/public/*`
+- `app/src/server.js`
+- `app/src/public/index.html`
+- `app/src/public/app.js`
 
 ## Commands to Run
 
@@ -31,48 +42,60 @@ cp .env.example .env
 docker compose up --build
 ```
 
-After the containers start, check the service state:
+After the containers start, check service state:
 
 ```bash
 docker compose ps
 bash scripts/validate-local-stack.sh
 ```
 
-## GUI Actions to Click
+## What To Do
 
-- Check Health
-- Show Version
+1. Open the GUI at `http://localhost:8080`.
+2. Click `Check Health`.
+3. Click `Show Version`.
+4. Compare what you see in the browser with `docker compose ps`.
 
 ## Expected Output
 
-- GUI opens at `http://localhost:8080`
-- health returns `ok`
-- version shows environment and image tag
-- `docker compose ps` shows healthy `postgres`, `redis`, `app`, and `nginx` services
+- the GUI opens at `http://localhost:8080`
+- `Check Health` returns `ok`
+- `Show Version` returns service metadata such as version, environment, and image tag
+- `docker compose ps` shows healthy `postgres`, `redis`, `app`, and `nginx`
 
 ## Checkpoint Questions
 
 - Which container is the public entry point?
 - Why is the app not exposed directly on a public port?
-- Which checks tell you the issue is your laptop setup versus the project itself?
+- What is the difference between `health` and `version`?
+- Which checks tell you the issue is laptop setup versus the project itself?
 
 ## Common Issues
 
 - `.env` file missing
-- image still building
+- image still building on the first run
 - Docker Desktop or Docker daemon not started
 - Docker Compose plugin not installed
+- students open port `3000` directly instead of using Nginx on `8080`
 
 ## Team Task Split
 
-- Student 1 opens GUI and checks responses
+- Student 1 opens the GUI and checks responses
 - Student 2 confirms compose services are healthy
-- Student 3 explains Nginx role
-- Student 4 records the URLs and status
+- Student 3 explains Nginx's role
+- Student 4 records the URLs and status results
 
 ## Instructor Checkpoint
 
-Each team must show the GUI and explain the difference between `/health` and `/version`.
+Each team should show the GUI, explain the difference between `/health` and `/version`, and point out which service is public.
+
+## Validation
+
+Run:
+
+```bash
+bash scripts/validate-local-stack.sh
+```
 
 ## Next Step
 

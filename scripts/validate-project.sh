@@ -9,6 +9,10 @@ pass() {
   printf '[PASS] %s\n' "$1"
 }
 
+warn() {
+  printf '[WARN] %s\n' "$1"
+}
+
 fail() {
   printf '[FAIL] %s\n' "$1"
   EXIT_CODE=1
@@ -21,6 +25,18 @@ check_file() {
   else
     fail "Missing ${path}"
   fi
+}
+
+search_file() {
+  local pattern="$1"
+  local file="$2"
+
+  if command -v rg >/dev/null 2>&1; then
+    rg -n "${pattern}" "${file}" >/dev/null 2>&1
+    return $?
+  fi
+
+  grep -En "${pattern}" "${file}" >/dev/null 2>&1
 }
 
 echo "Running guided-project sanity checks..."
@@ -50,6 +66,7 @@ for path in \
   "scripts/validate-local-stack.sh" \
   "scripts/validate-observability.sh" \
   "scripts/validate-vm-deployment.sh" \
+  "scripts/package-vm-source.sh" \
   "monitoring/grafana/provisioning/datasources/datasources.yml" \
   "monitoring/grafana/provisioning/dashboards/dashboards.yml" \
   "monitoring/prometheus/prometheus.yml" \
@@ -82,7 +99,7 @@ if command -v ruby >/dev/null 2>&1; then
     fail "One or more YAML files failed to parse."
   fi
 else
-  fail "ruby is not available for YAML validation."
+  warn "ruby is not installed, so YAML parse validation was skipped."
 fi
 
 if [[ -n "${NODE_BIN}" ]]; then
@@ -106,17 +123,17 @@ elif [[ -d "${PROJECT_DIR}/app/node_modules" ]]; then
     fail "App test suite failed."
   fi
 else
-  fail "app/node_modules is missing. Run npm ci in app/ before full validation."
+  warn "app/node_modules is missing. Run 'cd app && npm ci && npm test' for the full app validation path."
 fi
 
-if rg -n 'data-link="http://localhost' "${PROJECT_DIR}/app/src/public/index.html" >/dev/null 2>&1; then
+if search_file 'data-link="http://localhost' "${PROJECT_DIR}/app/src/public/index.html"; then
   fail "Found hardcoded localhost observability shortcut links in the GUI."
 else
   pass "No hardcoded localhost observability shortcuts remain in the GUI."
 fi
 
-if rg -n 'uses: azure/login@v1' "${PROJECT_DIR}/.github/workflows/deploy-vm.yml" >/dev/null 2>&1 \
-  && rg -n 'uses: azure/CLI@v1' "${PROJECT_DIR}/.github/workflows/deploy-vm.yml" >/dev/null 2>&1; then
+if search_file 'uses: azure/login@v1' "${PROJECT_DIR}/.github/workflows/deploy-vm.yml" \
+  && search_file 'uses: azure/CLI@v1' "${PROJECT_DIR}/.github/workflows/deploy-vm.yml"; then
   pass "Deploy workflow includes Azure login and Azure Key Vault retrieval steps."
 else
   fail "Deploy workflow is missing the expected Azure login or Azure Key Vault retrieval steps."

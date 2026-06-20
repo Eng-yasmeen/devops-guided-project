@@ -3,11 +3,15 @@ set -Eeuo pipefail
 
 APP_DIR="${1:-/opt/devops-guided-project}"
 
+node_major_version() {
+  node -p 'process.versions.node.split(".")[0]' 2>/dev/null || true
+}
+
 echo "Preparing Ubuntu VM for the guided DevOps project..."
 echo "Target project directory: ${APP_DIR}"
 
 sudo apt-get update
-sudo apt-get install -y ca-certificates curl gnupg lsb-release
+sudo apt-get install -y ca-certificates curl git gnupg jq lsb-release
 
 if ! command -v docker >/dev/null 2>&1; then
   echo "Installing Docker Engine and Docker Compose plugin..."
@@ -20,6 +24,12 @@ if ! command -v docker >/dev/null 2>&1; then
     sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
   sudo apt-get update
   sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+fi
+
+if ! command -v node >/dev/null 2>&1 || [[ "$(node_major_version)" -lt 20 ]]; then
+  echo "Installing Node.js 20 LTS for app tests and validation scripts..."
+  curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+  sudo apt-get install -y nodejs
 fi
 
 sudo systemctl enable docker
@@ -45,6 +55,11 @@ echo "Training-only optional local services:"
 echo "- 3000 Grafana: keep localhost only, use SSH tunnel"
 echo "- 9090 Prometheus: keep localhost only if enabled"
 echo "- Loki and Promtail should stay internal only"
+echo
+echo "Installed helper tools:"
+echo "- git for repository operations"
+echo "- jq for JSON-friendly validation output"
+echo "- Node.js 20 LTS for app tests and project validation"
 echo
 echo "Docker access:"
 echo "- ${USER} was added to the docker group if the group exists."

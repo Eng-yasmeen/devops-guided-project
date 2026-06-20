@@ -12,12 +12,14 @@ Use this folder when you are ready to deploy the project to a single Ubuntu VM.
 ## Simple Flow
 
 1. Copy the repository to the VM.
+   - preferred path: `git clone` directly on the VM when the repository is reachable
+   - workstation fallback: run `bash scripts/package-vm-source.sh` first, copy the archive to the VM, then extract it
 2. Copy `deploy/example.env` to `.env` and update the non-secret values.
 3. Choose one secret source:
    - preferred path: let GitHub Actions fetch runtime secrets from Azure Key Vault and pass them into `deploy.sh`
    - fallback path: keep runtime secrets in GitHub Secrets and let `deploy-vm.yml` pass them into `deploy.sh`
    - local manual fallback: copy `deploy/example.secrets.env` to `.env.secrets` and fill in the values manually
-3. Run:
+4. Run:
 
 ```bash
 bash deploy/vm-setup.sh /opt/devops-guided-project
@@ -25,13 +27,13 @@ bash deploy/vm-setup.sh /opt/devops-guided-project
 
 Open a new SSH session after setup if you want Docker access without `sudo`.
 
-4. Deploy:
+5. Deploy:
 
 ```bash
 bash deploy/deploy.sh latest
 ```
 
-5. If the VM stack is healthy, open the app on port `80`.
+6. If the VM stack is healthy, open the app on port `80`.
 
 ## GitHub Secrets Fallback
 
@@ -51,6 +53,10 @@ The deploy workflow can fetch runtime secrets from Azure Key Vault before it con
 
 Store these GitHub Secrets:
 
+- `VM_HOST`
+- `VM_USER`
+- `VM_APP_DIR`
+- `VM_SSH_KEY_B64` preferred, or `VM_SSH_KEY`
 - `AZURE_CLIENT_ID`
 - `AZURE_TENANT_ID`
 - `AZURE_SUBSCRIPTION_ID`

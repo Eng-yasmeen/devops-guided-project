@@ -52,6 +52,13 @@ If the VM works locally but your laptop browser does not reach port `80`, check 
 
 If your local network or ISP redirects plain HTTP before it reaches the VM, validate the app from another network or use an SSH tunnel to reach the VM services directly.
 
+If the GitHub-hosted deploy workflow fails before the SSH connection starts:
+
+- confirm `VM_HOST`, `VM_USER`, and `VM_APP_DIR` exist in GitHub Secrets
+- confirm `VM_SSH_KEY_B64` was created from the PEM file content, not from the file path
+- if you stored `VM_SSH_KEY` instead, make sure the secret contains the full multi-line private key text
+- rerun the workflow and check whether the failure happened during key validation or during the SSH connection step
+
 ## Observability Shortcut Confusion
 
 - if Grafana and Prometheus are on the VM, use the app from the VM hostname or public IP so `/ui-config` switches into SSH tunnel mode
@@ -66,6 +73,16 @@ If your local network or ISP redirects plain HTTP before it reaches the VM, vali
 - confirm the GitHub Actions identity can read the Key Vault secrets
 - confirm the Key Vault secret names match the documented names exactly
 - if Azure Key Vault is temporarily unavailable, rely on the GitHub Secrets fallback or create `.env.secrets` from `deploy/example.secrets.env`
+
+## Grafana Provisioning Fails After Copying Source To The VM
+
+- check for macOS metadata files:
+  - `find . -name '._*' -o -name '.DS_Store'`
+- if they exist, remove them and restart Grafana:
+  - `find . -name '._*' -delete`
+  - `find . -name '.DS_Store' -delete`
+  - `docker compose restart grafana`
+- for the next transfer, create the VM source archive with `bash scripts/package-vm-source.sh`
 
 ## Next Step
 

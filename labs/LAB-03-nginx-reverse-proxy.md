@@ -2,16 +2,24 @@
 
 ## Goal
 
-Understand Nginx as the public entry point.
+Understand Nginx as the single public entry point.
 
-## Problem Scenario
+## Why This Lab Matters
 
-You want one clean public path instead of exposing the app container directly.
+Students have already used the app. Now they need to understand how traffic actually enters the system and why we avoid exposing every service directly.
+
+## Before You Start
+
+Keep the local stack running from LAB-01 and LAB-02.
+
+Read [Logging](../docs/logging.md) after this lab, not before. First understand the request path.
 
 ## Files Used
 
 - `docker/nginx/nginx.conf`
 - `docker-compose.yml`
+- `logs/nginx/access.log`
+- `logs/nginx/error.log`
 
 ## Commands to Run
 
@@ -20,36 +28,51 @@ docker compose logs nginx --tail=50
 tail -f logs/nginx/access.log
 ```
 
-## GUI Actions to Click
+## What To Do
 
-- Check Health
-- Load Items from PostgreSQL
+1. Open the GUI through `http://localhost:8080`.
+2. Click `Check Health`.
+3. Click `Load Items from PostgreSQL`.
+4. Watch the Nginx access log while the requests happen.
+5. Open `docker/nginx/nginx.conf` and identify where requests are forwarded.
 
 ## Expected Output
 
 - requests come through `http://localhost:8080`
-- access log entries appear in `logs/nginx/access.log`
+- Nginx access log entries appear in `logs/nginx/access.log`
+- students can explain that Nginx receives the request first and forwards it to the app
 
 ## Checkpoint Questions
 
 - What problem does Nginx solve here?
+- Why do we want one public entry point?
 - Why is `/metrics` not exposed publicly through Nginx?
+- Which evidence shows that the request reached Nginx?
 
 ## Common Issues
 
 - Nginx started before the app was healthy
-- config was edited incorrectly
+- Nginx config was edited incorrectly
+- students inspect the app first and forget to confirm the proxy path
 
 ## Team Task Split
 
-- Student 1 uses GUI
-- Student 2 tails Nginx access log
-- Student 3 reads Nginx config
-- Student 4 explains request path from browser to app
+- Student 1 uses the GUI
+- Student 2 tails the Nginx access log
+- Student 3 reads the Nginx config
+- Student 4 explains the request path from browser to app
 
 ## Instructor Checkpoint
 
-Have one team narrate the full path of a request through Nginx to the app.
+Have one team narrate the full path of a request from browser to Nginx to the app, and point to both the config and the access log while explaining it.
+
+## Validation
+
+Re-run:
+
+```bash
+bash scripts/validate-local-stack.sh
+```
 
 ## Next Step
 

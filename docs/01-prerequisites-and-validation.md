@@ -91,6 +91,7 @@ bash deploy/vm-setup.sh /opt/devops-guided-project
 That script:
 
 - installs Docker if needed
+- installs `git`, `jq`, and Node.js 20 LTS if needed
 - enables the Docker service
 - prepares the project directory
 - creates log directories
@@ -145,6 +146,8 @@ This script checks:
 - npm
 - curl
 
+It also checks that the installed Node.js major version is `20` or later, because the app and test flow are written against that baseline.
+
 If the script passes, the workstation is ready for LAB-01.
 
 ## If Something Fails
@@ -152,7 +155,9 @@ If the script passes, the workstation is ready for LAB-01.
 - if `docker compose version` fails, install Docker Compose v2 or Docker Desktop
 - if `docker ps` fails, start Docker Desktop or the Docker service
 - on Linux, if Docker is running but `docker ps` still fails, add your user to the `docker` group and start a new shell
+- on Linux, if Docker starts working only after `deploy/vm-setup.sh`, reconnect your SSH session before rerunning the script
 - if `node --version` fails, install Node.js 20 or later
+- if `node --version` shows `v18.x` or older, upgrade to Node.js 20 LTS before continuing
 - if `curl --version` fails, install curl
 - if `npm --version` fails but `node --version` works, reinstall Node.js 20 LTS cleanly
 

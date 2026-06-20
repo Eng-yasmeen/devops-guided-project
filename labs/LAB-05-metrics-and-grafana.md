@@ -2,11 +2,17 @@
 
 ## Goal
 
-Use metrics to see service behavior over time.
+Use metrics to understand service behavior over time.
 
-## Problem Scenario
+## Why This Lab Matters
 
-You know requests are happening, but you need trends instead of single events.
+Logs explain one request. Metrics help students see patterns across many requests, such as rising latency, repeated errors, or failing dependencies.
+
+## Before You Start
+
+Complete LAB-04 first so students already know how to inspect the same events in logs.
+
+Open Grafana before starting this lab.
 
 ## Files Used
 
@@ -21,15 +27,17 @@ docker compose logs prometheus --tail=30
 docker compose logs grafana --tail=30
 ```
 
-## GUI Actions to Click
+## What To Do
 
-- Generate Slow Request
-- Generate Error
-- Check Readiness
+1. Click `Generate Slow Request` a few times.
+2. Click `Generate Error`.
+3. Click `Check Readiness`.
+4. Watch the Grafana dashboard and identify which panels changed.
+5. Compare one metric change with the matching logs from LAB-04.
 
 ## Expected Output
 
-- request rate increases
+- request rate increases after traffic is generated
 - error count changes after `/error`
 - latency rises after `/slow`
 - DB and Redis readiness gauges show current state
@@ -38,10 +46,13 @@ docker compose logs grafana --tail=30
 
 - What can the dashboard tell you quickly?
 - What can the dashboard not tell you without logs?
+- Which metric changed after `/slow`?
+- Which metric changed after `/error`?
 
 ## Common Issues
 
-- dashboard empty because no traffic was generated
+- dashboard looks empty because no traffic was generated
+- students expect metrics to explain the exact request without checking logs
 
 ## Team Task Split
 
@@ -53,6 +64,14 @@ docker compose logs grafana --tail=30
 ## Instructor Checkpoint
 
 Teams must explain one thing they learned from metrics and one thing they still needed logs to understand.
+
+## Validation
+
+Run:
+
+```bash
+bash scripts/validate-observability.sh
+```
 
 ## Next Step
 

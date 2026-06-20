@@ -36,6 +36,10 @@ This keeps the training path unblocked while still teaching the preferred cloud 
 
 ## GitHub Secrets Needed For Azure Login
 
+- `VM_HOST`
+- `VM_USER`
+- `VM_APP_DIR`
+- `VM_SSH_KEY_B64` preferred, or `VM_SSH_KEY`
 - `AZURE_CLIENT_ID`
 - `AZURE_TENANT_ID`
 - `AZURE_SUBSCRIPTION_ID`
@@ -74,6 +78,7 @@ Students should leave with this mental model:
 - application configuration is split into non-secret and secret values
 - GitHub Actions can retrieve secrets from a cloud secret manager
 - a fallback path can keep delivery moving without changing the app itself
+- VM access secrets are separate from runtime app secrets, and both must be configured for the deploy workflow to succeed
 
 ## Next Step
 

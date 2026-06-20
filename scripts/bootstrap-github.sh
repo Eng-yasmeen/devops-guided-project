@@ -93,7 +93,7 @@ if [[ -n "${VM_SSH_KEY:-}" ]]; then
   echo "Set GitHub secrets: VM_SSH_KEY and VM_SSH_KEY_B64"
 elif [[ -n "${VM_SSH_KEY_FILE:-}" ]]; then
   set_secret_from_file_if_present "VM_SSH_KEY" "${VM_SSH_KEY_FILE}"
-  base64 < "${VM_SSH_KEY_FILE}" | tr -d '\n' | gh secret set VM_SSH_KEY_B64 --repo "${TARGET}" --body -
+  base64 < "${VM_SSH_KEY_FILE}" | tr -d '\r\n' | gh secret set VM_SSH_KEY_B64 --repo "${TARGET}" --body -
   echo "Set GitHub secret from file: VM_SSH_KEY_B64"
 else
   echo "Skipped GitHub secrets: VM_SSH_KEY and VM_SSH_KEY_B64 (not set in local environment)"
@@ -105,3 +105,4 @@ echo "Next steps:"
 echo "1. Open https://github.com/${TARGET}/actions"
 echo "2. Trigger CI Build Push or push a commit to main."
 echo "3. Trigger Deploy VM with the image tag you want to validate."
+echo "4. If Deploy VM needs SSH authentication, prefer VM_SSH_KEY_B64 generated from the PEM file."

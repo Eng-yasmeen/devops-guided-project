@@ -2,6 +2,7 @@
 set -Eeuo pipefail
 
 EXIT_CODE=0
+MIN_NODE_MAJOR=20
 
 pass() {
   printf '[PASS] %s\n' "$1"
@@ -10,6 +11,10 @@ pass() {
 fail() {
   printf '[FAIL] %s\n' "$1"
   EXIT_CODE=1
+}
+
+node_major_version() {
+  node -p 'process.versions.node.split(".")[0]' 2>/dev/null
 }
 
 check_command() {
@@ -60,7 +65,14 @@ else
 fi
 
 if node --version >/dev/null 2>&1; then
-  pass "Node.js version: $(node --version)"
+  NODE_VERSION="$(node --version)"
+  NODE_MAJOR="$(node_major_version || true)"
+
+  if [[ -n "${NODE_MAJOR}" && "${NODE_MAJOR}" -ge "${MIN_NODE_MAJOR}" ]]; then
+    pass "Node.js version: ${NODE_VERSION}"
+  else
+    fail "Node.js version is ${NODE_VERSION}. Install Node.js ${MIN_NODE_MAJOR} or later."
+  fi
 fi
 
 if npm --version >/dev/null 2>&1; then

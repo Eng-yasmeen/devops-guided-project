@@ -87,6 +87,71 @@ Use it as the improvement backlog for the next polish pass.
 - status: default course direction changed to ACR
 - follow-up: confirm the ACR-first wording and examples remain consistent in future edits
 
+## 2026-06-20 Fresh VM Reset And Trainee Rebuild
+
+### Confirmed Working
+
+- a full reset of `/opt/devops-guided-project` followed by a clean redeploy worked
+- `deploy/vm-setup.sh` still prepared the VM correctly from a trainee-style starting point
+- `deploy/deploy.sh validation-20260620` logged into ACR, pulled the app image, and brought the stack up successfully
+- `scripts/validate-vm-deployment.sh http://127.0.0.1` passed on the VM
+- the public browser path responded with `HTTP/1.1 200 OK` at `http://devops-lab-001.swedencentral.cloudapp.azure.com/`
+- `/ui-config` returned the expected SSH-tunnel observability shortcuts for the VM path
+
+### Remaining Gaps
+
+#### 9. The prerequisite validator accepted an unsupported Node.js version
+
+- symptom: the VM passed `scripts/validate-prerequisites.sh` with Node.js `v18.19.1`
+- root cause: the script checked that Node existed, but did not enforce the documented Node.js 20 baseline
+- impact: a trainee could pass preflight and hit avoidable warnings or edge cases later
+- status: fixed by enforcing Node.js 20 or later in the prerequisite validator
+
+#### 10. A fresh VM clone path can fail if the GitHub repository is not accessible from the VM
+
+- symptom: `git clone https://github.com/iabouemira95/devops-guided-project.git` prompted for credentials on the VM
+- impact: the clean trainee story of "clone the repo on the VM and continue" breaks unless repository visibility or GitHub authentication is prepared first
+- status: improved by documenting the private-repository access requirement and adding `scripts/package-vm-source.sh` as the clean fallback
+
+#### 11. Cross-platform source copy can inject macOS metadata files that break Linux runtime components
+
+- symptom: copying the repository from macOS to the VM produced `._*` files such as `._dashboards.yml`
+- root cause: AppleDouble metadata files were included in the transfer
+- impact: Grafana provisioning failed with a YAML parse error even though the real dashboard file was correct
+- status:
+  - repository validation still checks for `._*` and `.DS_Store`
+  - `scripts/package-vm-source.sh` now creates a metadata-clean archive for VM transfer
+
+#### 12. `scripts/validate-project.sh` assumed optional local tooling too aggressively
+
+- symptom: the sanity validator failed on the VM because `ruby` and `rg` were not installed
+- root cause: the script treated optional helper tools as hard requirements
+- impact: a clean trainee environment looked broken even though the project files were valid
+- status:
+  - `rg` dependency removed by using a `grep` fallback
+  - missing `ruby` now skips YAML parse validation with a warning instead of a hard failure
+
+#### 13. `scripts/validate-project.sh` treated a clean checkout as a failure if `npm ci` had not run yet
+
+- symptom: the script failed because `app/node_modules` was absent on a fresh VM checkout
+- impact: the validation felt more like a maintainer-only script than a trainee-friendly project check
+- status: changed to a warning that clearly tells the trainee to run `cd app && npm ci && npm test` for the full app validation path
+
+#### 14. Reusing one Linux host for both the local lab stack and the VM stack needs an explicit stop step
+
+- symptom: the local stack had to be stopped before the `/opt` VM deployment layout could safely reuse the same ports
+- impact: a trainee using one Linux machine for both paths could run into port conflicts or confusing half-working behavior
+- follow-up: keep the VM deployment document explicit about running `docker compose down -v` before starting the `/opt` deployment path on the same host
+
+#### 15. GitHub-hosted deploy SSH authentication was too fragile to diagnose quickly
+
+- symptom: the workflow could fail with `Permission denied (publickey)` even though local SSH worked
+- root cause: the workflow only accepted one key format path and gave limited diagnostics before the SSH step
+- status:
+  - the deploy workflow now validates VM settings early
+  - it supports both `VM_SSH_KEY_B64` and `VM_SSH_KEY`
+  - it validates the decoded key before attempting the SSH connection
+
 ## Next Review Focus
 
 - finish the GitHub-hosted VM deploy path by resolving runner-to-VM SSH authentication
