@@ -175,4 +175,4 @@ That keeps the focus on:
 
 ## Next Step
 
-Start [LAB-01 Run Locally and Use GUI](../labs/LAB-01-run-locally-and-use-gui.md).
+Read [Request And Data Flow](request-and-data-flow.md), then start [LAB-01 Run Locally and Use GUI](../labs/LAB-01-run-locally-and-use-gui.md).

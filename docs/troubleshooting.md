@@ -37,7 +37,7 @@ If Docker is already running on Linux but `docker ps` still fails, add your user
 ## GitHub Actions Build Fails
 
 - confirm `app/package.json` and lockfile are in sync
-- confirm GHCR permissions are enabled
+- confirm `REGISTRY_LOGIN_SERVER`, `REGISTRY_USERNAME`, and `REGISTRY_PASSWORD` are set
 - confirm the workflow ran on the branch you expected
 - confirm whether the run was a PR validation path or a `main` publish path
 

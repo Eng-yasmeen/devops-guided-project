@@ -65,9 +65,7 @@ Use it as the improvement backlog for the next polish pass.
 
 - the GitHub repository was created successfully at `iabouemira95/devops-guided-project`
 - `CI Build Push` succeeded on `main`
-- the workflow ran tests, built the image, and published:
-  - `ghcr.io/iabouemira95/devops-guided-project/devops-mini-app:latest`
-  - `ghcr.io/iabouemira95/devops-guided-project/devops-mini-app:sha-22f8b59`
+- the workflow path itself is valid for test and publish stages
 
 ### Remaining Gaps
 
@@ -87,18 +85,15 @@ Use it as the improvement backlog for the next polish pass.
   - verify whether the VM or cloud environment applies any SSH restrictions that differ for GitHub-hosted runners
   - test with a dedicated deployment key generated specifically for GitHub Actions
 
-#### 8. The registry story is still split between GHCR and ACR during validation
+#### 8. The registry story was split between GHCR and ACR during validation
 
-- symptom: CI publishes to GHCR, while the manually validated VM runtime in this dry run used ACR credentials and an ACR image path
-- impact: the core student story should converge on one default registry path
-- follow-up: decide one default deploy registry for the guided path, then align:
-  - `.env` and `deploy/example.env`
-  - GitHub deploy secrets
-  - LAB-06 and LAB-07 wording
-  - validation examples
+- symptom: earlier CI used GHCR, while the manually validated VM runtime used ACR credentials and an ACR image path
+- impact: the core student story felt inconsistent
+- status: default course direction changed to ACR
+- follow-up: confirm the ACR-first wording and examples remain consistent in future edits
 
 ## Next Review Focus
 
-- complete the GitHub Actions path with valid GitHub authentication
+- finish the GitHub-hosted VM deploy path by resolving runner-to-VM SSH authentication
 - verify the app from a browser on a network path that does not rewrite plain HTTP
-- re-run all milestone validators after the GitHub path is in place
+- re-run all milestone validators after the final deploy path is stable

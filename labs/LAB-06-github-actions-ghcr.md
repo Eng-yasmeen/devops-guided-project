@@ -1,8 +1,8 @@
-# LAB-06 GitHub Actions GHCR
+# LAB-06 GitHub Actions ACR
 
 ## Goal
 
-See how the app becomes a reusable image in GHCR.
+See how the app becomes a reusable image in Azure Container Registry.
 
 ## Problem Scenario
 
@@ -22,7 +22,7 @@ git status
 Then perform one of these guided checks:
 
 1. Open the Actions tab and inspect the latest `CI Build Push` run.
-2. If you have repo access, open the Packages section and inspect the `devops-mini-app` image tags.
+2. If you have registry access, inspect the `devops-mini-app` image tags in ACR.
 
 ## GUI Actions to Click
 
@@ -45,7 +45,7 @@ None required.
 
 ## Common Issues
 
-- GHCR permissions missing
+- ACR credentials missing
 - workflow not running on the expected branch
 - students read the YAML but never verify the real workflow outcome
 
@@ -54,7 +54,7 @@ None required.
 - Student 1 reads workflow triggers
 - Student 2 reads build steps
 - Student 3 verifies the exact published image names from the workflow run
-- Student 4 verifies the matching package tags in GHCR and explains permissions
+- Student 4 verifies the matching image tags in ACR and explains which secrets make the push path work
 
 ## Instructor Checkpoint
 

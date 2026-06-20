@@ -50,6 +50,24 @@ Logs answer questions like:
 - Did readiness fall when Redis or PostgreSQL was unavailable?
 - Which logs explain the metric change I just saw?
 
+## Metrics And Logs Together
+
+Students should learn one simple sequence:
+
+1. trigger traffic from the GUI
+2. use Grafana dashboards to see whether latency, errors, or readiness changed
+3. use Grafana Explore and CLI logs to explain the exact request path
+4. rerun the same request after a fix and compare the result
+
+## Validation Path For Monitoring
+
+Use:
+
+1. GUI traffic such as `/slow` or `/error`
+2. Grafana dashboard panels
+3. Prometheus readiness and request metrics
+4. `bash scripts/validate-observability.sh`
+
 ## Next Step
 
-Move to [LAB-06 GitHub Actions GHCR](../labs/LAB-06-github-actions-ghcr.md).
+Move to [LAB-06 GitHub Actions ACR](../labs/LAB-06-github-actions-ghcr.md).

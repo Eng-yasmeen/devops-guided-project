@@ -101,6 +101,24 @@ Example with `GET /slow`:
 8. check the matching Nginx access log entry
 9. confirm the latency spike in Grafana
 
+## Component Roles During Log Investigation
+
+- browser tells you which action was triggered
+- Nginx tells you whether the request reached the platform and how long it took
+- app logs tell you what the route actually did
+- PostgreSQL and Redis CLI logs help when the request depends on a backing service
+- Grafana Explore helps correlate app and Nginx logs in one place
+
+## Validation Path For Logging
+
+Use:
+
+1. GUI button
+2. app logs
+3. Nginx access log
+4. Grafana Explore
+5. `bash scripts/validate-observability.sh`
+
 ## Next Step
 
 Continue to [Monitoring](monitoring.md), then run [LAB-05 Metrics and Grafana](../labs/LAB-05-metrics-and-grafana.md).

@@ -1,21 +1,68 @@
 # Registries
 
-This project fully implements **GHCR**.
+This project fully implements **Azure Container Registry (ACR)**.
 
 Other registries are documented for comparison only.
 
 For the main guided path:
 
-- build and publish the app image to GHCR
+- build and publish the app image to ACR
 - deploy that image to the VM
 - use Azure Key Vault or GitHub Secrets to provide the runtime secrets needed during deployment
+
+## Azure ACR
+
+Use when:
+
+- the project deploys to Azure-hosted training infrastructure
+- you want one consistent registry story for CI and VM deployment
+
+Image format:
+
+```text
+<registry>.azurecr.io/devops-mini-app:latest
+<registry>.azurecr.io/devops-mini-app:sha-<short-sha>
+```
+
+Secrets:
+
+- `REGISTRY_LOGIN_SERVER`
+- `REGISTRY_USERNAME`
+- `REGISTRY_PASSWORD`
+
+Student verification:
+
+- check the `CI Build Push` workflow logs for the final image names
+- check the ACR repository tags for `latest` and `sha-<short-sha>`
+
+Login example:
+
+```yaml
+- name: Log in to ACR
+  uses: docker/login-action@v3
+  with:
+    registry: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+    username: ${{ secrets.REGISTRY_USERNAME }}
+    password: ${{ secrets.REGISTRY_PASSWORD }}
+```
+
+Pros:
+
+- aligns naturally with Azure VM training
+- keeps the registry story consistent with Azure Key Vault usage
+- works well for a guided enterprise-style path
+
+Cons:
+
+- requires registry credentials
+- is more cloud-specific than GHCR
 
 ## GHCR
 
 Use when:
 
 - your code is already in GitHub
-- you want the simplest training setup
+- you want a GitHub-native alternative
 
 Image format:
 
@@ -46,12 +93,11 @@ Login example:
 
 Pros:
 
-- simple for training
-- easy permission model
+- simple when the whole course stays inside GitHub
 
 Cons:
 
-- tied to GitHub
+- less aligned if the training deployment target and secret story are already Azure-based
 
 ## Docker Hub
 
@@ -124,43 +170,6 @@ Pros:
 Cons:
 
 - more cloud setup than this course needs
-
-## Azure ACR
-
-Use when:
-
-- you already deploy mostly in Azure
-
-Image format:
-
-```text
-<registry>.azurecr.io/devops-mini-app:latest
-```
-
-Common secrets:
-
-- ACR username
-- ACR password or token
-- registry URL
-
-Login step example:
-
-```yaml
-- name: Log in to ACR
-  uses: docker/login-action@v3
-  with:
-    registry: ${{ secrets.ACR_LOGIN_SERVER }}
-    username: ${{ secrets.ACR_USERNAME }}
-    password: ${{ secrets.ACR_PASSWORD }}
-```
-
-Pros:
-
-- good fit for Azure-first teams
-
-Cons:
-
-- adds cloud-specific setup that this course intentionally avoids in the core path
 
 ## Next Step
 

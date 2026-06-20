@@ -109,7 +109,7 @@ Behavior:
 
 ## Next Step
 
-Read [Runtime Stack](runtime-stack.md), then [App GUI](app-gui.md), then start [LAB-01 Run Locally and Use GUI](../labs/LAB-01-run-locally-and-use-gui.md).
+Read [Runtime Stack](runtime-stack.md), then [App GUI](app-gui.md), then [Request And Data Flow](request-and-data-flow.md), then start [LAB-01 Run Locally and Use GUI](../labs/LAB-01-run-locally-and-use-gui.md).
 
 ## Integration Rule
 

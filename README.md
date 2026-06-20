@@ -42,15 +42,15 @@ flowchart LR
     Promtail --> Loki["Loki"]
     Prometheus --> Grafana["Grafana dashboards"]
     Loki --> Explore["Grafana Explore logs"]
-    GitHub["GitHub Actions"] --> GHCR["GHCR app image"]
+    GitHub["GitHub Actions"] --> ACR["ACR app image"]
     GitHub --> KeyVault["Azure Key Vault"]
-    GHCR --> VM["Ubuntu VM"]
+    ACR --> VM["Ubuntu VM"]
     KeyVault --> GitHub
 
     classDef public fill:#e7f3ff,stroke:#1f5aa6,color:#123;
     classDef private fill:#eef7e8,stroke:#4e7a2f,color:#123;
     class Public public;
-    class App,DB,Cache,Prometheus,Grafana,Explore,Loki,Promtail,AppLog,NginxLog,VM,KeyVault,GHCR private;
+    class App,DB,Cache,Prometheus,Grafana,Explore,Loki,Promtail,AppLog,NginxLog,VM,KeyVault,ACR private;
 ```
 
 ### Service Exposure Model
@@ -78,7 +78,7 @@ flowchart LR
 - understand how PostgreSQL and Redis support the app
 - use Nginx as the public entry point
 - compare metrics and logs during troubleshooting
-- build and push an image to GHCR
+- build and push an image to ACR
 - deploy the image to an Ubuntu VM
 - recover from a few common failures
 
@@ -152,6 +152,8 @@ What this starts technically:
 - `grafana`: metrics and logs UI
 - `loki`: log storage
 - `promtail`: log shipping from app and Nginx files
+
+To understand how requests, data, logs, and metrics move through the stack, read [Request And Data Flow](docs/request-and-data-flow.md).
 
 ## Local URLs
 
@@ -249,8 +251,8 @@ Workflows:
 
 - tests on pull request
 - tests, builds, and pushes on `main`
-- publishes to GHCR
-- produces `latest` and `sha-<short-sha>` tags that students should verify in the workflow logs and GHCR package page
+- publishes to ACR
+- produces `latest` and `sha-<short-sha>` tags that students should verify in the workflow logs and the ACR repository
 
 `deploy-vm.yml`:
 
@@ -353,7 +355,7 @@ Run:
 
 Do:
 
-- [LAB-06 GitHub Actions GHCR](labs/LAB-06-github-actions-ghcr.md)
+- [LAB-06 GitHub Actions ACR](labs/LAB-06-github-actions-ghcr.md)
 
 Read:
 
@@ -403,13 +405,14 @@ Read the project documents in this order:
 3. [Architecture](docs/architecture.md)
 4. [Runtime Stack](docs/runtime-stack.md)
 5. [App GUI](docs/app-gui.md)
-6. [Logging](docs/logging.md)
-7. [Monitoring](docs/monitoring.md)
-8. [Registries](docs/registries.md)
-9. [Azure Key Vault and Secrets Flow](docs/secrets-and-azure-key-vault.md)
-10. [VM Deployment](docs/vm-deployment.md)
-11. [Troubleshooting](docs/troubleshooting.md)
-12. [Trainee Validation Findings](docs/trainee-validation-findings.md)
+6. [Request And Data Flow](docs/request-and-data-flow.md)
+7. [Logging](docs/logging.md)
+8. [Monitoring](docs/monitoring.md)
+9. [Registries](docs/registries.md)
+10. [Azure Key Vault and Secrets Flow](docs/secrets-and-azure-key-vault.md)
+11. [VM Deployment](docs/vm-deployment.md)
+12. [Troubleshooting](docs/troubleshooting.md)
+13. [Trainee Validation Findings](docs/trainee-validation-findings.md)
 
 ## Next Step
 
