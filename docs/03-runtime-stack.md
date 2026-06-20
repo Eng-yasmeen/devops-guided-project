@@ -279,4 +279,4 @@ If logs are missing in Grafana:
 
 ## Next Step
 
-Return to [Architecture](architecture.md), then continue to [App GUI](app-gui.md).
+Return to [Architecture](02-architecture.md), then continue to [App GUI](04-app-gui.md).

@@ -324,4 +324,4 @@ Use these checkpoints:
 
 ## Next Step
 
-Continue to [Logging](logging.md), then [Monitoring](monitoring.md).
+Continue to [Logging](06-logging.md), then [Monitoring](07-monitoring.md).

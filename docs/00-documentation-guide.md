@@ -1,6 +1,8 @@
 # Documentation Guide
 
-Read these documents in this order as you move through the guided project.
+This file shows the recommended reading order for the project documentation.
+
+Use it when you are new to the repository and want to understand what to read first, what each document explains, and how the documents support the labs.
 
 ## 1. Before You Start
 
@@ -11,40 +13,40 @@ It explains what to install, what to check before LAB-01, and which validation s
 
 ## 2. Understand the Stack
 
-- [Architecture](architecture.md)
-- [Runtime Stack](runtime-stack.md)
-- [App GUI](app-gui.md)
-- [Request And Data Flow](request-and-data-flow.md)
+- [Architecture](02-architecture.md)
+- [Runtime Stack](03-runtime-stack.md)
+- [App GUI](04-app-gui.md)
+- [Request And Data Flow](05-request-and-data-flow.md)
 
 Read these before or during LAB-00 and LAB-01.
-They explain the service layout, the Compose files, the role of each component, how requests and data move, and what each GUI request does.
+They explain the service layout, the Compose files, the role of each component, how requests and data move, what each GUI request does, and how the technical design answers the opening team request.
 
 ## 3. Follow the Observability Story
 
-- [Logging](logging.md)
-- [Monitoring](monitoring.md)
+- [Logging](06-logging.md)
+- [Monitoring](07-monitoring.md)
 
 Read these during LAB-04 and LAB-05.
 They explain how logs, metrics, request IDs, and the request cycle fit together.
 
 ## 4. Learn the Delivery Path
 
-- [Registries](registries.md)
-- [Azure Key Vault and Secrets Flow](secrets-and-azure-key-vault.md)
-- [VM Deployment](vm-deployment.md)
+- [Registries](08-registries.md)
+- [Azure Key Vault and Secrets Flow](09-secrets-and-azure-key-vault.md)
+- [VM Deployment](10-vm-deployment.md)
 
 Read these during LAB-06 and LAB-07.
 They explain image publishing, how Azure Key Vault feeds the deployment workflow, and how the VM stack is exposed.
 
 ## 5. Use When Something Breaks
 
-- [Troubleshooting](troubleshooting.md)
+- [Troubleshooting](11-troubleshooting.md)
 
 Keep this open during LAB-08 and during instructor checkpoints.
 
 ## 6. Review Improvement Notes
 
-- [Trainee Validation Findings](trainee-validation-findings.md)
+- [Trainee Validation Findings](12-trainee-validation-findings.md)
 
 Use this after a full dry run.
 It captures real friction points found while following the project like a student.

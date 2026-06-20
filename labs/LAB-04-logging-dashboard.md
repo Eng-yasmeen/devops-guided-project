@@ -94,4 +94,4 @@ bash scripts/validate-observability.sh
 
 ## Next Step
 
-Read [Monitoring](../docs/monitoring.md), then continue to [LAB-05 Metrics and Grafana](LAB-05-metrics-and-grafana.md).
+Read [Monitoring](../docs/07-monitoring.md), then continue to [LAB-05 Metrics and Grafana](LAB-05-metrics-and-grafana.md).

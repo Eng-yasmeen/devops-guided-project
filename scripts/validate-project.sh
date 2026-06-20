@@ -54,9 +54,9 @@ for path in \
   "docker-compose.vm.yml" \
   ".github/workflows/ci-build-push.yml" \
   ".github/workflows/deploy-vm.yml" \
-  "docs/README.md" \
+  "docs/00-documentation-guide.md" \
   "docs/01-prerequisites-and-validation.md" \
-  "docs/secrets-and-azure-key-vault.md" \
+  "docs/09-secrets-and-azure-key-vault.md" \
   "app/src/server.js" \
   "app/src/public/index.html" \
   "app/src/public/app.js" \

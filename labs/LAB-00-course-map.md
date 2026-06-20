@@ -4,6 +4,14 @@
 
 Understand the full project story before you start running commands.
 
+## Working Scenario
+
+Treat this project like a real request arriving to a DevOps team:
+
+> "Take this small service, make it runnable in containers, expose it through one safe entry point, add logs and metrics, publish it through CI, deploy it to a VM, and make recovery straightforward."
+
+LAB-00 helps students translate that request into a technical delivery plan.
+
 ## Why This Lab Matters
 
 This project is not mainly about app code. It is about learning how one small service moves through a realistic DevOps journey:
@@ -21,20 +29,21 @@ If you have not checked your machine yet, read [Prerequisites and Validation](..
 ## Files Used
 
 - `README.md`
-- `docs/architecture.md`
-- `docs/runtime-stack.md`
-- `docs/request-and-data-flow.md`
+- `docs/02-architecture.md`
+- `docs/03-runtime-stack.md`
+- `docs/05-request-and-data-flow.md`
 
 ## What To Review
 
 Read these in order:
 
-1. [Architecture](../docs/architecture.md)
-2. [Runtime Stack](../docs/runtime-stack.md)
-3. [Request And Data Flow](../docs/request-and-data-flow.md)
+1. [Architecture](../docs/02-architecture.md)
+2. [Runtime Stack](../docs/03-runtime-stack.md)
+3. [Request And Data Flow](../docs/05-request-and-data-flow.md)
 
 As you read, make sure you can point to:
 
+- what the incoming team request is really asking for
 - where the browser connects first
 - where the app runs
 - where PostgreSQL and Redis fit
@@ -47,6 +56,8 @@ As you read, make sure you can point to:
 Students can explain the project in one short sentence, for example:
 
 `A small app runs behind Nginx, uses PostgreSQL and Redis, sends logs and metrics to the observability stack, then gets packaged and deployed to a VM.`
+
+They should also be able to explain why that design answers the original team request.
 
 ## Checkpoint Questions
 
@@ -70,7 +81,7 @@ Students can explain the project in one short sentence, for example:
 
 ## Instructor Checkpoint
 
-Ask each team to describe the full system story in one sentence and point to the architecture diagram while explaining it.
+Ask each team to restate the incoming request in their own words, then describe the full system story in one sentence while pointing to the architecture diagram.
 
 ## Validation
 
@@ -82,4 +93,4 @@ bash scripts/validate-prerequisites.sh
 
 ## Next Step
 
-Read [Architecture](../docs/architecture.md), then continue to [LAB-01 Run Locally and Use GUI](LAB-01-run-locally-and-use-gui.md).
+Read [Architecture](../docs/02-architecture.md), then continue to [LAB-01 Run Locally and Use GUI](LAB-01-run-locally-and-use-gui.md).

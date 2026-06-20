@@ -17,7 +17,7 @@ Make sure these are ready:
 - the deployment environment files on the VM
 - the required secrets path, using Azure Key Vault or the documented fallback
 
-Read [VM Deployment](../docs/vm-deployment.md) before starting the commands.
+Read [VM Deployment](../docs/10-vm-deployment.md) before starting the commands.
 
 ## Files Used
 
@@ -94,4 +94,4 @@ bash scripts/validate-vm-deployment.sh http://YOUR_VM_PUBLIC_IP
 
 ## Next Step
 
-Open [Troubleshooting](../docs/troubleshooting.md), then continue to [LAB-08 Failure and Recovery](LAB-08-failure-and-recovery.md).
+Open [Troubleshooting](../docs/11-troubleshooting.md), then continue to [LAB-08 Failure and Recovery](LAB-08-failure-and-recovery.md).

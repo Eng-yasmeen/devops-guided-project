@@ -121,4 +121,4 @@ Use:
 
 ## Next Step
 
-Continue to [Monitoring](monitoring.md), then run [LAB-05 Metrics and Grafana](../labs/LAB-05-metrics-and-grafana.md).
+Continue to [Monitoring](07-monitoring.md), then run [LAB-05 Metrics and Grafana](../labs/LAB-05-metrics-and-grafana.md).

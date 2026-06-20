@@ -82,4 +82,4 @@ Students should leave with this mental model:
 
 ## Next Step
 
-Continue to [VM Deployment](vm-deployment.md), then run [LAB-07 Deploy to VM](../labs/LAB-07-deploy-to-vm.md).
+Continue to [VM Deployment](10-vm-deployment.md), then run [LAB-07 Deploy to VM](../labs/LAB-07-deploy-to-vm.md).

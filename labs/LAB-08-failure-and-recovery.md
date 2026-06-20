@@ -27,9 +27,9 @@ Have these ready before creating a failure:
 - `docker-compose.yml`
 - `docker-compose.vm.yml`
 - `docker/nginx/nginx.conf`
-- `docs/logging.md`
-- `docs/monitoring.md`
-- `docs/troubleshooting.md`
+- `docs/06-logging.md`
+- `docs/07-monitoring.md`
+- `docs/11-troubleshooting.md`
 
 ## Commands to Run
 
@@ -126,4 +126,4 @@ bash scripts/validate-vm-deployment.sh http://YOUR_VM_PUBLIC_IP
 
 ## Next Step
 
-Return to [README](../README.md) for the full project map and use [docs/trainee-validation-findings.md](../docs/trainee-validation-findings.md) to record any issues you want to improve later.
+Return to [README](../README.md) for the full project map and use [docs/12-trainee-validation-findings.md](../docs/12-trainee-validation-findings.md) to record any issues you want to improve later.

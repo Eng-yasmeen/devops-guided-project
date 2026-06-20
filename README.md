@@ -1,435 +1,241 @@
 # DevOps Guided Project
 
-## Start Here
+This repository is a guided, hands-on DevOps project for junior engineers. The application is intentionally small. The main learning goal is to understand how a service moves through a practical delivery path:
 
-This repository is designed as a guided journey.
+`design request -> local runtime -> observability -> image build -> registry publish -> VM deployment -> validation -> recovery`
 
-Start at **Step 1** and follow the links in order.
-Each document or lab should hand you to the next one.
+## Project Purpose
 
-## Overview
+Treat this repository as the response to a realistic request sent to a DevOps team:
 
-This repository is a 6-hour guided DevOps project for junior DevOps and cloud engineers.
+> "We have a small service that needs to run in a training environment. Package it into a container, expose it safely, connect it to PostgreSQL and Redis, make it observable with logs and metrics, publish it through CI, deploy it to a VM, and make validation and recovery straightforward."
 
-The project teaches one simple story:
+This project implements that request with a small Express app, Docker Compose, Nginx, PostgreSQL, Redis, Grafana, Prometheus, Loki, GitHub Actions, Azure Container Registry, and a single Ubuntu VM deployment path.
 
-1. code
-2. run the service
-3. observe it
-4. package it
-5. push it
-6. deploy it
-7. verify it
-8. recover it
+## Who This Is For
 
-The app is intentionally small.
-The DevOps workflow is the main lesson.
+- junior DevOps engineers
+- junior cloud engineers
+- instructors running a guided workshop
+- teams who need a simple but realistic end-to-end delivery example
 
-## Architecture
+The repository assumes basic familiarity with Linux commands, Git, Docker basics, and CI/CD concepts. It does not assume deep backend development experience.
+
+## Scope
+
+This project is designed to teach:
+
+- how a service is structured and run with Docker Compose
+- how a reverse proxy sits in front of an application
+- how PostgreSQL and Redis support application behavior
+- how logs and metrics answer different operational questions
+- how CI builds and publishes a container image
+- how a VM deploy consumes an existing image instead of rebuilding
+- how to validate a deployment and recover from simple failures
+
+This project is not intended to teach:
+
+- Kubernetes
+- Terraform or Ansible
+- large microservice architecture
+- complex application business logic
+- enterprise-grade secrets or platform hardening
+
+## First Reading Order
+
+If you are opening the repository for the first time, use this order:
+
+1. [Documentation Guide](docs/00-documentation-guide.md)
+2. [Prerequisites and Validation](docs/01-prerequisites-and-validation.md)
+3. [Architecture](docs/02-architecture.md)
+4. [Runtime Stack](docs/03-runtime-stack.md)
+5. [App GUI](docs/04-app-gui.md)
+6. [Request And Data Flow](docs/05-request-and-data-flow.md)
+7. [Logging](docs/06-logging.md)
+8. [Monitoring](docs/07-monitoring.md)
+9. [Registries](docs/08-registries.md)
+10. [Azure Key Vault and Secrets Flow](docs/09-secrets-and-azure-key-vault.md)
+11. [VM Deployment](docs/10-vm-deployment.md)
+12. [Troubleshooting](docs/11-troubleshooting.md)
+13. [Trainee Validation Findings](docs/12-trainee-validation-findings.md)
+
+## System Summary
+
+At a high level:
+
+- the browser talks to Nginx
+- Nginx forwards traffic to the Express app
+- the app uses PostgreSQL for persistent data
+- the app uses Redis for the cache demo
+- the app writes structured logs and exposes metrics
+- Prometheus stores metrics
+- Promtail ships app and Nginx log files into Loki
+- Grafana provides the main observability UI
+- GitHub Actions builds and publishes the app image to ACR
+- the VM deployment path pulls that image and starts the stack with Docker Compose
 
 ```mermaid
 flowchart LR
-    Browser["Student Browser"] --> Public["Public Entry Point<br/>Nginx :8080 local / :80 VM"]
-    Public --> App["Express App :3000"]
-    App --> DB["PostgreSQL"]
-    App --> Cache["Redis"]
-    App --> AppLog["logs/app/app.log"]
-    Public --> NginxLog["logs/nginx/access.log<br/>logs/nginx/error.log"]
+    Browser["Browser"] --> Nginx["Nginx public entry point"]
+    Nginx --> App["Express app"]
+    App --> Postgres["PostgreSQL"]
+    App --> Redis["Redis"]
     App --> Metrics["/metrics"]
+    App --> AppLog["logs/app/app.log"]
+    Nginx --> NginxLog["logs/nginx/*.log"]
     Metrics --> Prometheus["Prometheus"]
     AppLog --> Promtail["Promtail"]
     NginxLog --> Promtail
     Promtail --> Loki["Loki"]
     Prometheus --> Grafana["Grafana dashboards"]
-    Loki --> Explore["Grafana Explore logs"]
-    GitHub["GitHub Actions"] --> ACR["ACR app image"]
+    Loki --> Grafana
+    GitHub["GitHub Actions"] --> ACR["Azure Container Registry"]
     GitHub --> KeyVault["Azure Key Vault"]
     ACR --> VM["Ubuntu VM"]
     KeyVault --> GitHub
-
-    classDef public fill:#e7f3ff,stroke:#1f5aa6,color:#123;
-    classDef private fill:#eef7e8,stroke:#4e7a2f,color:#123;
-    class Public public;
-    class App,DB,Cache,Prometheus,Grafana,Explore,Loki,Promtail,AppLog,NginxLog,VM,KeyVault,ACR private;
 ```
 
-### Service Exposure Model
+For the detailed explanation, read [Architecture](docs/02-architecture.md).
 
-- public locally: Nginx on `http://localhost:8080`
-- public on VM: Nginx on port `80`
-- private by default: app, PostgreSQL, Redis, Loki, Promtail
-- localhost-only on VM: Grafana and Prometheus through SSH tunnel
+## Repository Structure
 
-### Core Runtime Files
-
-- app service: `app/src/server.js`
-- app image build: `docker/app.Dockerfile`
-- local stack: `docker-compose.yml`
-- VM stack: `docker-compose.vm.yml`
-- reverse proxy: `docker/nginx/nginx.conf`
-- metrics scrape config: `monitoring/prometheus/prometheus.yml`
-- log shipping config: `monitoring/promtail/promtail-config.yml`
-- log storage config: `monitoring/loki/loki-config.yml`
-- Grafana provisioning: `monitoring/grafana/provisioning/`
-
-## Learning Objectives
-
-- run a small web service through Docker Compose
-- understand how PostgreSQL and Redis support the app
-- use Nginx as the public entry point
-- compare metrics and logs during troubleshooting
-- build and push an image to ACR
-- deploy the image to an Ubuntu VM
-- recover from a few common failures
-
-## Prerequisites
-
-- Docker and Docker Compose
-- Git
-- basic Linux commands
-- basic understanding of containers and CI/CD
-
-For the exact install commands and validation path, start with [Prerequisites and Validation](docs/01-prerequisites-and-validation.md).
-
-## Preflight Check
-
-Before you start the labs, make sure the local tooling is ready:
-
-```bash
-docker --version
-docker compose version
-docker ps
+```text
+.
+├── README.md
+├── app/                         # Express app, GUI assets, tests
+├── db/                          # PostgreSQL initialization script
+├── docker/                      # Dockerfile and Nginx configuration
+├── monitoring/                  # Prometheus, Loki, Promtail, Grafana config
+├── deploy/                      # VM setup and deployment scripts
+├── docs/                        # Ordered documentation set
+├── labs/                        # Guided workshop labs
+├── instructor/                  # Instructor notes and timing
+├── logs/                        # Host-side app and Nginx logs
+├── scripts/                     # Validation and helper scripts
+├── docker-compose.yml           # Local training stack
+├── docker-compose.vm.yml        # VM runtime stack
+└── .github/workflows/           # CI build/publish and VM deploy workflows
 ```
 
-What good looks like:
+## Main Runtime Components
 
-- `docker --version` prints a Docker version
-- `docker compose version` prints the Compose plugin version
-- `docker ps` runs without a daemon error
+| Component | Role | Public Exposure |
+| --- | --- | --- |
+| `nginx` | public entry point and reverse proxy | local `:8080`, VM `:80` |
+| `app` | GUI, API, metrics, structured logs | internal only |
+| `postgres` | persistent `items` data | internal only |
+| `redis` | cache demo | internal only |
+| `prometheus` | metric storage | local `:9090`, VM localhost-only |
+| `grafana` | dashboards and log exploration | local `:3000`, VM localhost-only |
+| `loki` | log storage for app and Nginx | internal only |
+| `promtail` | log shipping from host files | internal only |
 
-If `docker compose` is missing, install Docker Desktop or the Docker Compose v2 plugin first.
+## Setup
 
-If `docker ps` cannot reach the daemon, start Docker Desktop or the Docker service before continuing.
+Start with [Prerequisites and Validation](docs/01-prerequisites-and-validation.md).
 
-For the full guided setup and validation sequence, read [Prerequisites and Validation](docs/01-prerequisites-and-validation.md).
-
-## Quick Start Local
+If you want the short version:
 
 ```bash
+bash scripts/validate-prerequisites.sh
 cp .env.example .env
 docker compose up --build
 ```
 
-On the first run, expect the image build and service startup to take a little time.
-
-When the stack settles, run:
-
-```bash
-docker compose ps
-```
-
-What good looks like:
-
-- `postgres` is healthy
-- `redis` is healthy
-- `app` is healthy
-- `nginx` is healthy
-- `grafana`, `prometheus`, `loki`, and `promtail` are running
-
-Run the local milestone validator:
+Then validate the local stack:
 
 ```bash
 bash scripts/validate-local-stack.sh
 ```
 
-What this starts technically:
+## Local Usage Flow
 
-- `app`: Express GUI and API
-- `postgres`: relational data store for `items`
-- `redis`: cache demo dependency
-- `nginx`: public entry point
-- `prometheus`: metrics storage
-- `grafana`: metrics and logs UI
-- `loki`: log storage
-- `promtail`: log shipping from app and Nginx files
+1. Start the stack with `docker compose up --build`.
+2. Open the GUI at [http://localhost:8080](http://localhost:8080).
+3. Use the GUI to generate health, readiness, DB, cache, slow, and error traffic.
+4. Validate the stack with `bash scripts/validate-local-stack.sh`.
+5. Inspect logs in Grafana Explore or with `docker compose logs`.
+6. Inspect metrics in Grafana and Prometheus.
+7. Run `cd app && npm ci && npm test` when you need the app test path.
 
-To understand how requests, data, logs, and metrics move through the stack, read [Request And Data Flow](docs/request-and-data-flow.md).
+Local URLs:
 
-## Local URLs
-
-- App GUI through Nginx: [http://localhost:8080](http://localhost:8080)
+- app GUI: [http://localhost:8080](http://localhost:8080)
 - Grafana: [http://localhost:3000](http://localhost:3000)
 - Prometheus: [http://localhost:9090](http://localhost:9090)
 
-## Run Tests
+## Validation Scripts
 
-```bash
-cd app
-npm ci
-npm test
-```
+These scripts are part of the expected workflow, not optional extras.
 
-If `npm test` fails because `node` is missing, install Node.js 20 or later before continuing.
+- `bash scripts/validate-prerequisites.sh`
+- `bash scripts/validate-local-stack.sh`
+- `bash scripts/validate-observability.sh`
+- `bash scripts/validate-vm-deployment.sh http://YOUR_VM_OR_LOCAL_URL`
+- `bash scripts/validate-project.sh`
 
-## Use the GUI
+## CI/CD Flow
 
-Open the DevOps Control Panel at `http://localhost:8080`.
-
-Use it to:
-
-- check health
-- check readiness
-- inspect version info
-- read and create PostgreSQL items
-- test Redis caching
-- generate a slow request
-- generate a 500 error
-- see how each request moves through Nginx, the app, PostgreSQL or Redis, and the observability stack
-- jump into Grafana and Prometheus with shortcuts that adapt to local use or VM SSH-tunnel use
-
-## Logs
-
-Use Grafana Explore for app and Nginx logs.
-
-Use CLI logs for all services:
-
-```bash
-docker compose logs app --tail=50
-docker compose logs nginx --tail=50
-docker compose logs postgres --tail=50
-docker compose logs redis --tail=50
-```
-
-Nginx file logs:
-
-```bash
-tail -f logs/nginx/access.log
-tail -f logs/nginx/error.log
-```
-
-Run the observability milestone validator after LAB-04:
-
-```bash
-bash scripts/validate-observability.sh
-```
-
-## Metrics
-
-Prometheus scrapes the app internally.
-
-Open Grafana and use the provisioned dashboard:
-
-- request rate
-- error count
-- latency
-- DB readiness
-- Redis readiness
-- build info
-
-## Sanity Checks
-
-Run the lightweight project sanity checks before you demo or deploy:
-
-```bash
-bash scripts/validate-project.sh
-```
-
-## Manual Image Build
-
-```bash
-docker build -f docker/app.Dockerfile -t devops-mini-app:manual .
-```
-
-## GitHub Actions
-
-Workflows:
+The repository includes two main workflows:
 
 - `.github/workflows/ci-build-push.yml`
+  - pull request: test only
+  - push to `main`: test, build, and publish the app image to ACR
 - `.github/workflows/deploy-vm.yml`
+  - manual deploy of a selected image tag to the Ubuntu VM
+  - Azure Key Vault preferred for runtime secrets
+  - GitHub Secrets fallback when Key Vault is not ready
 
-`ci-build-push.yml`:
+Related reading:
 
-- tests on pull request
-- tests, builds, and pushes on `main`
-- publishes to ACR
-- produces `latest` and `sha-<short-sha>` tags that students should verify in the workflow logs and the ACR repository
+- [Registries](docs/08-registries.md)
+- [Azure Key Vault and Secrets Flow](docs/09-secrets-and-azure-key-vault.md)
+- [VM Deployment](docs/10-vm-deployment.md)
 
-`deploy-vm.yml`:
+## VM Deployment Summary
 
-- deploys a selected image tag to a VM over SSH
-- reads runtime secrets from Azure Key Vault when Azure OIDC is configured
-- falls back to GitHub Secrets when Azure Key Vault is not ready yet
-- expects `VM_HOST`, `VM_USER`, `VM_APP_DIR`, and `VM_SSH_KEY_B64` as the cleanest GitHub SSH secret path
+The VM deployment path is intentionally simple:
 
-## VM Deployment
+1. prepare the VM with `deploy/vm-setup.sh`
+2. provide `.env` and runtime secrets
+3. pull the published app image from ACR
+4. start the VM stack with `docker-compose.vm.yml`
+5. validate `/health`, `/ready`, and `/version`
+6. use an SSH tunnel for Grafana on the VM
 
-Use:
-
-1. `deploy/vm-setup.sh`
-2. `deploy/deploy.sh`
-3. `deploy/README.md`
-4. `docs/vm-deployment.md`
-
-For the GitHub Actions deploy path:
-
-- keep VM access values in GitHub Secrets
-- use Azure Key Vault as the preferred runtime secret source
-- keep matching GitHub Secrets as the fallback path for classroom continuity
-
-Recommended VM access GitHub Secrets:
-
-- `VM_HOST`
-- `VM_USER`
-- `VM_APP_DIR`
-- `VM_SSH_KEY_B64` preferred, or `VM_SSH_KEY`
-
-Recommended Azure Key Vault secret names for this project:
-
-- `POSTGRES_PASSWORD`
-- `GRAFANA_ADMIN_PASSWORD`
-- `REGISTRY_LOGIN_SERVER`
-- `REGISTRY_USERNAME`
-- `REGISTRY_PASSWORD`
-
-Grafana on the VM is localhost-only by default.
-
-Use an SSH tunnel:
-
-```bash
-ssh -L 3000:localhost:3000 USER@VM_PUBLIC_IP
-```
-
-After deployment, run:
-
-```bash
-bash scripts/validate-vm-deployment.sh http://YOUR_VM_PUBLIC_IP
-```
-
-If you need to copy the repository to the VM from a workstation instead of cloning it on the VM, create a clean archive first:
+If you need to copy the source to the VM from a workstation instead of cloning it there, use:
 
 ```bash
 bash scripts/package-vm-source.sh
 ```
 
-This avoids macOS metadata files such as `._*` that can break Linux-side Grafana provisioning.
+That helper avoids macOS metadata files that can break Linux-side provisioning.
 
-## Cleanup
+## Labs
 
-```bash
-docker compose down -v
-```
-
-## Guided Journey
-
-### Step 1. Prepare your laptop
-
-Read:
-
-- [Prerequisites and Validation](docs/01-prerequisites-and-validation.md)
-
-Run:
-
-- `bash scripts/validate-prerequisites.sh`
-
-### Step 2. Understand the project story
-
-Read:
+The labs are designed to match the delivery story:
 
 - [LAB-00 Course Map](labs/LAB-00-course-map.md)
-- [Architecture](docs/architecture.md)
-- [App GUI](docs/app-gui.md)
-
-### Step 3. Start the stack locally
-
-Do:
-
 - [LAB-01 Run Locally and Use GUI](labs/LAB-01-run-locally-and-use-gui.md)
 - [LAB-02 Compose Layers DB Cache](labs/LAB-02-compose-layers-db-cache.md)
 - [LAB-03 Nginx Reverse Proxy](labs/LAB-03-nginx-reverse-proxy.md)
-
-Run:
-
-- `bash scripts/validate-local-stack.sh`
-
-### Step 4. Learn the observability path
-
-Do:
-
 - [LAB-04 Logging Dashboard](labs/LAB-04-logging-dashboard.md)
 - [LAB-05 Metrics and Grafana](labs/LAB-05-metrics-and-grafana.md)
-
-Read:
-
-- [Logging](docs/logging.md)
-- [Monitoring](docs/monitoring.md)
-
-Run:
-
-- `bash scripts/validate-observability.sh`
-
-### Step 5. Learn the delivery path
-
-Do:
-
 - [LAB-06 GitHub Actions ACR](labs/LAB-06-github-actions-acr.md)
-
-Read:
-
-- [Registries](docs/registries.md)
-- [Azure Key Vault and Secrets Flow](docs/secrets-and-azure-key-vault.md)
-- [VM Deployment](docs/vm-deployment.md)
-
-### Step 6. Deploy and verify
-
-Do:
-
 - [LAB-07 Deploy to VM](labs/LAB-07-deploy-to-vm.md)
-
-Run:
-
-- `bash scripts/validate-vm-deployment.sh http://YOUR_VM_PUBLIC_IP`
-
-### Step 7. Break and recover
-
-Do:
-
 - [LAB-08 Failure and Recovery](labs/LAB-08-failure-and-recovery.md)
 
-Keep open:
+## Operational Notes
 
-- [Troubleshooting](docs/troubleshooting.md)
+- Nginx is the only public entry point by design.
+- The app is not meant to be exposed directly.
+- On the VM, Grafana and Prometheus stay localhost-only by default.
+- Loki only stores app and Nginx logs in this course. PostgreSQL and Redis logs stay in CLI logs to keep the scope manageable.
+- The project favors explicit files and visible runtime behavior over abstraction.
 
-## Milestone Validators
+## Where To Go Next
 
-1. Environment ready
-   Validation: `bash scripts/validate-prerequisites.sh`
-2. Local stack running
-   Validation: `bash scripts/validate-local-stack.sh`
-3. Observability working
-   Validation: `bash scripts/validate-observability.sh`
-4. Repo integrity checked
-   Validation: `bash scripts/validate-project.sh`
-5. VM deployment verified
-   Validation: `bash scripts/validate-vm-deployment.sh http://YOUR_VM_PUBLIC_IP`
-
-## Documentation Sequence
-
-Read the project documents in this order:
-
-1. [Documentation Guide](docs/README.md)
-2. [Prerequisites and Validation](docs/01-prerequisites-and-validation.md)
-3. [Architecture](docs/architecture.md)
-4. [Runtime Stack](docs/runtime-stack.md)
-5. [App GUI](docs/app-gui.md)
-6. [Request And Data Flow](docs/request-and-data-flow.md)
-7. [Logging](docs/logging.md)
-8. [Monitoring](docs/monitoring.md)
-9. [Registries](docs/registries.md)
-10. [Azure Key Vault and Secrets Flow](docs/secrets-and-azure-key-vault.md)
-11. [VM Deployment](docs/vm-deployment.md)
-12. [Troubleshooting](docs/troubleshooting.md)
-13. [Trainee Validation Findings](docs/trainee-validation-findings.md)
-
-## Next Step
-
-Begin with [Step 1: Prerequisites and Validation](docs/01-prerequisites-and-validation.md).
+- new engineer: [Documentation Guide](docs/00-documentation-guide.md)
+- guided workshop path: [LAB-00 Course Map](labs/LAB-00-course-map.md)
+- deployment work: [VM Deployment](docs/10-vm-deployment.md)
+- when something is broken: [Troubleshooting](docs/11-troubleshooting.md)

@@ -12,7 +12,7 @@ Students have already used the app. Now they need to understand how traffic actu
 
 Keep the local stack running from LAB-01 and LAB-02.
 
-Read [Logging](../docs/logging.md) after this lab, not before. First understand the request path.
+Read [Logging](../docs/06-logging.md) after this lab, not before. First understand the request path.
 
 ## Files Used
 
@@ -76,4 +76,4 @@ bash scripts/validate-local-stack.sh
 
 ## Next Step
 
-Read [Logging](../docs/logging.md), then continue to [LAB-04 Logging Dashboard](LAB-04-logging-dashboard.md).
+Read [Logging](../docs/06-logging.md), then continue to [LAB-04 Logging Dashboard](LAB-04-logging-dashboard.md).

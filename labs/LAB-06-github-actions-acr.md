@@ -16,13 +16,13 @@ Make sure students already understand:
 - why we want tagged images
 - why deployment should consume an image instead of rebuilding on the VM
 
-Read [Registries](../docs/registries.md) before or during this lab.
+Read [Registries](../docs/08-registries.md) before or during this lab.
 
 ## Files Used
 
 - `.github/workflows/ci-build-push.yml`
 - `docker/app.Dockerfile`
-- `docs/registries.md`
+- `docs/08-registries.md`
 
 ## Commands to Run
 
@@ -92,4 +92,4 @@ Validation for this lab is:
 
 ## Next Step
 
-Read [Registries](../docs/registries.md), then [Azure Key Vault and Secrets Flow](../docs/secrets-and-azure-key-vault.md), then continue to [LAB-07 Deploy to VM](LAB-07-deploy-to-vm.md).
+Read [Registries](../docs/08-registries.md), then [Azure Key Vault and Secrets Flow](../docs/09-secrets-and-azure-key-vault.md), then continue to [LAB-07 Deploy to VM](LAB-07-deploy-to-vm.md).

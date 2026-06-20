@@ -173,4 +173,4 @@ Cons:
 
 ## Next Step
 
-Read [Azure Key Vault and Secrets Flow](secrets-and-azure-key-vault.md).
+Read [Azure Key Vault and Secrets Flow](09-secrets-and-azure-key-vault.md).
