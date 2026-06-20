@@ -60,6 +60,18 @@ flowchart LR
 - private by default: app, PostgreSQL, Redis, Loki, Promtail
 - localhost-only on VM: Grafana and Prometheus through SSH tunnel
 
+### Core Runtime Files
+
+- app service: `app/src/server.js`
+- app image build: `docker/app.Dockerfile`
+- local stack: `docker-compose.yml`
+- VM stack: `docker-compose.vm.yml`
+- reverse proxy: `docker/nginx/nginx.conf`
+- metrics scrape config: `monitoring/prometheus/prometheus.yml`
+- log shipping config: `monitoring/promtail/promtail-config.yml`
+- log storage config: `monitoring/loki/loki-config.yml`
+- Grafana provisioning: `monitoring/grafana/provisioning/`
+
 ## Learning Objectives
 
 - run a small web service through Docker Compose
@@ -76,6 +88,8 @@ flowchart LR
 - Git
 - basic Linux commands
 - basic understanding of containers and CI/CD
+
+For the exact install commands and validation path, start with [Prerequisites and Validation](docs/01-prerequisites-and-validation.md).
 
 ## Preflight Check
 
@@ -127,6 +141,17 @@ Run the local milestone validator:
 ```bash
 bash scripts/validate-local-stack.sh
 ```
+
+What this starts technically:
+
+- `app`: Express GUI and API
+- `postgres`: relational data store for `items`
+- `redis`: cache demo dependency
+- `nginx`: public entry point
+- `prometheus`: metrics storage
+- `grafana`: metrics and logs UI
+- `loki`: log storage
+- `promtail`: log shipping from app and Nginx files
 
 ## Local URLs
 
@@ -376,14 +401,15 @@ Read the project documents in this order:
 1. [Documentation Guide](docs/README.md)
 2. [Prerequisites and Validation](docs/01-prerequisites-and-validation.md)
 3. [Architecture](docs/architecture.md)
-4. [App GUI](docs/app-gui.md)
-5. [Logging](docs/logging.md)
-6. [Monitoring](docs/monitoring.md)
-7. [Registries](docs/registries.md)
-8. [Azure Key Vault and Secrets Flow](docs/secrets-and-azure-key-vault.md)
-9. [VM Deployment](docs/vm-deployment.md)
-10. [Troubleshooting](docs/troubleshooting.md)
-11. [Trainee Validation Findings](docs/trainee-validation-findings.md)
+4. [Runtime Stack](docs/runtime-stack.md)
+5. [App GUI](docs/app-gui.md)
+6. [Logging](docs/logging.md)
+7. [Monitoring](docs/monitoring.md)
+8. [Registries](docs/registries.md)
+9. [Azure Key Vault and Secrets Flow](docs/secrets-and-azure-key-vault.md)
+10. [VM Deployment](docs/vm-deployment.md)
+11. [Troubleshooting](docs/troubleshooting.md)
+12. [Trainee Validation Findings](docs/trainee-validation-findings.md)
 
 ## Next Step
 

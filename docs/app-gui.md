@@ -39,6 +39,25 @@ It is a simple helper for:
 | Generate Slow Request | `GET /slow` | latency in logs and metrics | none |
 | Generate Error | `GET /error` | 500 response and error logs | none |
 
+## What the GUI Is Technically
+
+The GUI is:
+
+- a server-rendered HTML page
+- styled with plain CSS
+- powered by plain browser-side JavaScript
+- served by the same Express app as the API
+
+This matters because students can inspect one service and still learn:
+
+- browser traffic
+- API requests
+- reverse proxy behavior
+- logs
+- metrics
+
+without adding a separate frontend build system.
+
 ## Request Flow Panel
 
 Each traffic button now explains:
@@ -50,6 +69,60 @@ Each traffic button now explains:
 - what students should inspect next
 
 This keeps the GUI focused on DevOps reasoning instead of only showing raw JSON responses.
+
+## Why Each Request Type Exists
+
+### `/health`
+
+Use it to answer:
+
+- is the app process alive?
+- can Nginx reach the app?
+
+### `/ready`
+
+Use it to answer:
+
+- can the app reach PostgreSQL?
+- can the app reach Redis?
+- is the service ready for real traffic?
+
+### `/version`
+
+Use it to answer:
+
+- what version is running?
+- what image tag is deployed?
+- what environment is this?
+
+### `/items`
+
+Use it to answer:
+
+- is PostgreSQL reachable?
+- can the app read and write real data?
+
+### `/cache-demo`
+
+Use it to answer:
+
+- is Redis reachable?
+- what does a cache miss look like?
+- what does a cache hit look like?
+
+### `/slow`
+
+Use it to answer:
+
+- how does a slow request appear in logs?
+- how does latency appear in metrics?
+
+### `/error`
+
+Use it to answer:
+
+- how does a 500 error look in logs?
+- how do error counts move in metrics?
 
 ## Full Request Cycle In Logs
 
@@ -67,6 +140,20 @@ Each request now creates a clearer cycle in the app logs:
 3. `request completed` or `request failed`
 
 This makes it easier for trainees to follow one full request from entry to outcome.
+
+## How the GUI Fits the Course Story
+
+The GUI is not the lesson by itself.
+
+It is the easiest way to generate predictable traffic so students can then inspect:
+
+- Nginx behavior
+- app behavior
+- database behavior
+- cache behavior
+- logs
+- metrics
+- deployment metadata
 
 ## Observability Shortcuts
 

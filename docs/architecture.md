@@ -37,6 +37,26 @@ This project intentionally uses one small service and a few supporting layers.
 - **Loki**: log storage
 - **Promtail**: log shipper for app and Nginx logs
 
+## Files That Define the Stack
+
+Core runtime files:
+
+- `docker-compose.yml`
+- `docker-compose.vm.yml`
+- `docker/app.Dockerfile`
+- `docker/nginx/nginx.conf`
+- `monitoring/prometheus/prometheus.yml`
+- `monitoring/loki/loki-config.yml`
+- `monitoring/promtail/promtail-config.yml`
+- `monitoring/grafana/provisioning/...`
+
+These files matter because:
+
+- Compose defines which containers run
+- the Dockerfile defines how the app image is built
+- Nginx defines the public request path
+- Prometheus, Loki, Promtail, and Grafana define the observability path
+
 ## Request Path Summary
 
 For most trainee actions, the request path is:
@@ -50,9 +70,46 @@ For most trainee actions, the request path is:
 7. Promtail ships app and Nginx logs to Loki
 8. Grafana shows metrics dashboards and log searches
 
+## Two Runtime Modes
+
+### Local mode
+
+Uses:
+
+- `docker-compose.yml`
+
+Behavior:
+
+- builds the app image locally
+- exposes Nginx on `localhost:8080`
+- exposes Grafana on `localhost:3000`
+- exposes Prometheus on `localhost:9090`
+
+### VM mode
+
+Uses:
+
+- `docker-compose.vm.yml`
+
+Behavior:
+
+- pulls the app image from a registry
+- exposes Nginx on port `80`
+- keeps Grafana and Prometheus localhost-only by default
+- is driven by `.env` and `.env.secrets`
+
+## What Students Should Understand Technically
+
+- Nginx is the only intended public entry point
+- the app is not meant to be exposed directly
+- PostgreSQL and Redis are support services, not public services
+- Prometheus scrapes the app internally
+- Loki stores only app and Nginx logs in this course
+- Grafana is the single observability UI
+
 ## Next Step
 
-Move to [App GUI](app-gui.md), then start [LAB-01 Run Locally and Use GUI](../labs/LAB-01-run-locally-and-use-gui.md).
+Read [Runtime Stack](runtime-stack.md), then [App GUI](app-gui.md), then start [LAB-01 Run Locally and Use GUI](../labs/LAB-01-run-locally-and-use-gui.md).
 
 ## Integration Rule
 

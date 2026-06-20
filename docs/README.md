@@ -12,10 +12,11 @@ It explains what to install, what to check before LAB-01, and which validation s
 ## 2. Understand the Stack
 
 - [Architecture](architecture.md)
+- [Runtime Stack](runtime-stack.md)
 - [App GUI](app-gui.md)
 
 Read these before or during LAB-00 and LAB-01.
-They explain the service layout, which services are public or private, and what each GUI request does.
+They explain the service layout, the Compose files, which services are public or private, and what each GUI request does.
 
 ## 3. Follow the Observability Story
 
