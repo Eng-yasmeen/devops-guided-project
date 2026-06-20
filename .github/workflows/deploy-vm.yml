@@ -115,7 +115,7 @@ jobs:
           IMAGE_TAG: ${{ inputs.image_tag }}
           VM_HOST: ${{ secrets.VM_HOST }}
           VM_USER: ${{ secrets.VM_USER }}
-          VM_SSH_KEY: ${{ secrets.VM_SSH_KEY }}
+          VM_SSH_KEY_B64: ${{ secrets.VM_SSH_KEY_B64 }}
           VM_APP_DIR: ${{ secrets.VM_APP_DIR }}
           POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
           GRAFANA_ADMIN_PASSWORD: ${{ env.GRAFANA_ADMIN_PASSWORD }}
@@ -127,7 +127,7 @@ jobs:
 
           key_file="${RUNNER_TEMP}/vm-deploy-key.pem"
           ssh_config_file="${RUNNER_TEMP}/vm-ssh-config"
-          printf '%s\n' "${VM_SSH_KEY}" > "${key_file}"
+          printf '%s' "${VM_SSH_KEY_B64}" | base64 --decode > "${key_file}"
           chmod 600 "${key_file}"
 
           cat > "${ssh_config_file}" <<EOF
