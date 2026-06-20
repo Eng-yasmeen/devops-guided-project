@@ -124,6 +124,15 @@ If you are validating the VM path, also run:
 bash scripts/validate-vm-deployment.sh http://YOUR_VM_PUBLIC_IP
 ```
 
+## Known Good End State
+
+- Running: the service returns to a healthy state after the chosen failure is recovered.
+- Endpoint: the original failing check now succeeds again, such as `/ready`, `/items`, or the GUI action that first showed the problem.
+- Confirm with: rerun the matching validator and the original GUI action.
+- Expected logs: recovery steps produce new healthy log lines after the earlier failure evidence.
+- Common failure: students restart a service before collecting enough evidence, then cannot explain the root cause.
+- Safe retry: create one failure at a time, collect GUI symptom, metrics, logs, and service status first, then recover and rerun the same check
+
 ## Next Step
 
 Return to [README](../README.md) for the full project map and use [docs/12-trainee-validation-findings.md](../docs/12-trainee-validation-findings.md) to record any issues you want to improve later.

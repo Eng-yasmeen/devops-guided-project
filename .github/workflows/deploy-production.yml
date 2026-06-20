@@ -1,12 +1,16 @@
-name: Deploy VM
+name: Deploy Production
 
 on:
+  workflow_run:
+    workflows:
+      - Publish Image
+    types:
+      - completed
   workflow_dispatch:
     inputs:
       image_tag:
         description: Image tag to deploy
         required: true
-        default: latest
 
 concurrency:
   group: production-deploy
@@ -18,7 +22,15 @@ permissions:
 
 jobs:
   deploy:
+    name: deploy-production
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
+    environment:
+      name: production
     env:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
@@ -31,6 +43,21 @@ jobs:
       VM_SSH_KEY_B64: ${{ secrets.VM_SSH_KEY_B64 }}
 
     steps:
+      - name: Select image tag
+        id: image-tag
+        run: |
+          set -euo pipefail
+
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
+            image_tag="${{ inputs.image_tag }}"
+          else
+            short_sha="$(printf '%s' '${{ github.event.workflow_run.head_sha }}' | cut -c1-7)"
+            image_tag="sha-${short_sha}"
+          fi
+
+          echo "image_tag=${image_tag}" >> "${GITHUB_OUTPUT}"
+          echo "Selected image tag: ${image_tag}"
+
       - name: Load runtime secret fallback from GitHub Secrets
         env:
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
@@ -124,7 +151,7 @@ jobs:
           fi
 
           if [ "${missing}" -eq 1 ]; then
-            echo "Add the missing VM settings in GitHub Secrets before running Deploy VM."
+            echo "Add the missing VM settings in GitHub Secrets before running Deploy Production."
             exit 1
           fi
 
@@ -140,7 +167,7 @@ jobs:
 
       - name: Deploy selected tag to VM
         env:
-          IMAGE_TAG: ${{ inputs.image_tag }}
+          IMAGE_TAG: ${{ steps.image-tag.outputs.image_tag }}
           POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
           GRAFANA_ADMIN_PASSWORD: ${{ env.GRAFANA_ADMIN_PASSWORD }}
           REGISTRY_LOGIN_SERVER: ${{ env.REGISTRY_LOGIN_SERVER }}

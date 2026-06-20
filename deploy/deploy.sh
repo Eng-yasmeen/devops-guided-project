@@ -7,6 +7,64 @@ ENV_FILE="${PROJECT_DIR}/.env"
 SECRETS_FILE="${PROJECT_DIR}/.env.secrets"
 IMAGE_TAG_INPUT="${1:-}"
 
+section() {
+  printf '\n== %s ==\n' "$1"
+}
+
+info() {
+  printf '[INFO] %s\n' "$1"
+}
+
+pass() {
+  printf '[PASS] %s\n' "$1"
+}
+
+compose_ps() {
+  docker compose -f docker-compose.vm.yml ps
+}
+
+show_post_deploy_summary() {
+  local version_json health_json ready_json
+
+  section "Post-Deploy Summary"
+  info "Deployed image tag: ${IMAGE_TAG}"
+  info "App image: ${APP_IMAGE}:${IMAGE_TAG}"
+
+  version_json="$(curl -fsS http://127.0.0.1/version || true)"
+  health_json="$(curl -fsS http://127.0.0.1/health || true)"
+  ready_json="$(curl -fsS http://127.0.0.1/ready || true)"
+
+  if [[ -n "${version_json}" ]]; then
+    info "/version response:"
+    printf '%s\n' "${version_json}"
+  else
+    info "/version response was not available."
+  fi
+
+  if [[ -n "${health_json}" ]]; then
+    info "/health response:"
+    printf '%s\n' "${health_json}"
+  else
+    info "/health response was not available."
+  fi
+
+  if [[ -n "${ready_json}" ]]; then
+    info "/ready response:"
+    printf '%s\n' "${ready_json}"
+  else
+    info "/ready response was not available."
+  fi
+
+  info "Running compose services:"
+  compose_ps || true
+
+  info "Where to check logs next:"
+  info "- docker compose -f docker-compose.vm.yml logs app --tail=50"
+  info "- docker compose -f docker-compose.vm.yml logs nginx --tail=50"
+  info "- tail -f logs/app/app.log"
+  info "- tail -f logs/nginx/access.log"
+}
+
 write_runtime_secrets_file() {
   local wrote_secret=0
 
@@ -102,10 +160,11 @@ fi
 
 validate_required_values
 
-echo "Deploying ${APP_IMAGE}:${IMAGE_TAG}"
+section "Deploy"
+info "Deploying ${APP_IMAGE}:${IMAGE_TAG}"
 
 if [[ -n "${REGISTRY_LOGIN_SERVER:-}" && -n "${REGISTRY_USERNAME:-}" && -n "${REGISTRY_PASSWORD:-}" ]]; then
-  echo "Logging in to container registry ${REGISTRY_LOGIN_SERVER}..."
+  info "Logging in to container registry ${REGISTRY_LOGIN_SERVER}..."
   printf '%s' "${REGISTRY_PASSWORD}" | docker login "${REGISTRY_LOGIN_SERVER}" --username "${REGISTRY_USERNAME}" --password-stdin
 fi
 
@@ -113,17 +172,20 @@ cd "${PROJECT_DIR}"
 docker compose -f docker-compose.vm.yml pull app
 docker compose -f docker-compose.vm.yml up -d
 
-echo "Running smoke tests..."
+section "Smoke Tests"
+info "Running health and readiness checks against http://127.0.0.1 ..."
 for attempt in 1 2 3 4 5 6; do
   if curl -fsS http://127.0.0.1/health >/dev/null && curl -fsS http://127.0.0.1/ready >/dev/null; then
-    echo "Deployment succeeded."
+    pass "Deployment succeeded."
+    show_post_deploy_summary
     exit 0
   fi
-  echo "Smoke test attempt ${attempt} failed. Waiting for services..."
+  info "Smoke test attempt ${attempt} failed. Waiting for services..."
   sleep 5
 done
 
-echo "Deployment smoke test failed. Showing recent logs..."
+section "Deployment Failure"
+info "Deployment smoke test failed. Showing recent logs..."
 docker compose -f docker-compose.vm.yml logs app --tail=50 || true
 docker compose -f docker-compose.vm.yml logs nginx --tail=50 || true
 exit 1

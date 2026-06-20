@@ -9,3 +9,4 @@ logs/nginx/*.log
 ._*
 *.swp
 *.swo
+instructor/

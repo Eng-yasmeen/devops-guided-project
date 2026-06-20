@@ -2,7 +2,7 @@
 
 ## Goal
 
-See how the app becomes a reusable image in Azure Container Registry.
+See how a feature branch change moves through PR validation, image publishing, and production-ready tagging in Azure Container Registry.
 
 ## Why This Lab Matters
 
@@ -20,7 +20,8 @@ Read [Registries](../docs/08-registries.md) before or during this lab.
 
 ## Files Used
 
-- `.github/workflows/ci-build-push.yml`
+- `.github/workflows/ci.yml`
+- `.github/workflows/publish-image.yml`
 - `docker/app.Dockerfile`
 - `docs/08-registries.md`
 
@@ -32,29 +33,39 @@ git status
 
 Then do these guided checks:
 
-1. Open the Actions tab and inspect the latest `CI Build Push` run.
-2. If you have registry access, inspect the `devops-mini-app` repository in ACR.
+1. Create or inspect a feature-branch pull request into `main`.
+2. Open the Actions tab and inspect the latest `PR CI` and `Publish Image` runs.
+3. If you have registry access, inspect the `devops-mini-app` repository in ACR.
 
 ## What To Do
 
-1. Read the workflow triggers.
-2. Identify which path runs on pull request.
-3. Identify which path builds and pushes on `main`.
-4. Open a successful run and find the final pushed image names.
-5. Find one `sha-<short-sha>` tag that could be redeployed later.
+1. Read the trigger for `.github/workflows/ci.yml` and confirm it runs only for pull requests into `main`.
+2. Open the PR CI run and identify what each required check proves:
+   - `test-and-validate`
+   - `dependency-scan`
+   - `workflow-and-compose-check`
+3. Confirm that PR CI also proves the application image can build before merge.
+4. Read the trigger for `.github/workflows/publish-image.yml` and confirm it runs after merge to `main`.
+5. Open a successful publish run and find the final pushed image names.
+6. Find one `sha-<short-sha>` tag that could be redeployed later.
+7. Confirm that the app image is scanned after publish, not during the VM deploy.
 
 ## Expected Output
 
-- pull requests run tests only
-- push to `main` builds and pushes the image
+- pull requests into `main` run required CI checks only
+- the publish workflow runs after merge to `main`
 - image tags include `latest` and `sha-<short-sha>`
 - students can point to one run that only validated and one run that published
+- students can explain why the SHA tag is the safer deployment tag
 - students can identify the exact SHA tag that would be used for recovery
 
 ## Checkpoint Questions
 
-- Why do pull requests test but not push?
+- Why do pull requests validate but not push?
+- What does each required PR check prove?
+- Why is it useful to prove the Docker image builds before merge?
 - Why is the SHA tag useful for recovery?
+- Why scan dependencies before merge and scan the image after publish?
 - Where in the workflow logs do you confirm the final pushed image names?
 - Where in ACR do you confirm that the image was actually published?
 
@@ -62,21 +73,23 @@ Then do these guided checks:
 
 - ACR credentials missing
 - workflow not running on the expected branch
+- pull request opened against the wrong base branch
 - students read the YAML but never verify the real workflow outcome
 - students confuse a successful test run with a published image
+- students deploy `latest` mentally even though the safer promotion tag is `sha-<short-sha>`
 
 ## Team Task Split
 
-- Student 1 reads workflow triggers
-- Student 2 reads build and test steps
-- Student 3 verifies the published image names from the workflow run
-- Student 4 verifies the matching image tags in ACR and explains which secrets make the push path work
+- Student 1 explains the feature branch and pull request path
+- Student 2 explains the required PR checks
+- Student 3 verifies the published image names from the publish run
+- Student 4 verifies the matching image tags in ACR and explains which secrets make the publish path work
 
 ## Instructor Checkpoint
 
-Have teams explain the difference between validation and publishing, then show:
+Have teams explain the difference between validation, publishing, and deployment readiness, then show:
 
-- one workflow run that tested only
+- one workflow run that validated a pull request only
 - one workflow run that published
 - one SHA tag they could redeploy later
 
@@ -86,9 +99,19 @@ There is no separate lab-only script here.
 
 Validation for this lab is:
 
-- a successful `CI Build Push` workflow run
+- a successful `PR CI` workflow run
+- a successful `Publish Image` workflow run on `main`
 - visible image tags in ACR
-- a team explanation of which tag should be deployed next
+- a team explanation of which tag should be deployed next and why
+
+## Known Good End State
+
+- Running: the repository has one successful PR validation run and one successful publish run on `main`.
+- Endpoint: not applicable for this lab; the artifact is the published image tag.
+- Confirm with: the `PR CI` workflow logs, the `Publish Image` workflow logs, and the matching image tags in ACR.
+- Expected logs: PR logs show the required checks; publish logs show the final pushed image names, including `latest` and `sha-<short-sha>`.
+- Common failure: students stop after seeing PR tests pass and never confirm that merge to `main` published a deployable image.
+- Safe retry: update the feature branch, rerun the PR checks, merge again, then recheck ACR
 
 ## Next Step
 

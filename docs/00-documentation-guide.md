@@ -6,10 +6,13 @@ Use it when you are new to the repository and want to understand what to read fi
 
 ## 1. Before You Start
 
+- create your own repository from the public template first
+- do not run the labs directly in the shared template repository
 - [Prerequisites and Validation](01-prerequisites-and-validation.md)
 
 Use this first.
 It explains what to install, what to check before LAB-01, and which validation script to run.
+The root README explains how to use `Use this template`, create your own repository, and keep your own secrets and CI/CD history separate from the course template.
 
 ## 2. Understand the Stack
 
@@ -59,4 +62,14 @@ Run these at the matching points in the journey:
 - `bash scripts/validate-local-stack.sh`
 - `bash scripts/validate-observability.sh`
 - `bash scripts/validate-vm-deployment.sh http://YOUR_VM_OR_LOCAL_URL`
+- `bash scripts/validate-runtime-contract.sh local`
+- `bash scripts/validate-runtime-contract.sh vm http://127.0.0.1`
+- `bash scripts/validate-doc-journey.sh`
 - `bash scripts/validate-project.sh`
+
+Run the runtime contract validator only after the matching stack is already up.
+
+Reset helpers for safe retries:
+
+- `bash scripts/reset-local-lab.sh`
+- `bash scripts/reset-vm-lab.sh`

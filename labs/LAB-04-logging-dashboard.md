@@ -92,6 +92,15 @@ Run:
 bash scripts/validate-observability.sh
 ```
 
+## Known Good End State
+
+- Running: `grafana`, `loki`, and `promtail` are up, and app plus Nginx logs are being written.
+- Endpoint: the GUI still responds and `/slow` plus `/error` create visible log events.
+- Confirm with: `bash scripts/validate-observability.sh`
+- Expected logs: app logs include `request started`, `request completed`, and `request failed`; Nginx access log includes `/slow` and `/error`.
+- Common failure: Grafana is up but no fresh traffic was generated, so the log search looks empty.
+- Safe retry: click `Generate Slow Request` and `Generate Error` again, then search by `request_id` in Grafana Explore or `logs/app/app.log`
+
 ## Next Step
 
 Read [Monitoring](../docs/07-monitoring.md), then continue to [LAB-05 Metrics and Grafana](LAB-05-metrics-and-grafana.md).

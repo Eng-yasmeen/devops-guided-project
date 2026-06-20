@@ -62,6 +62,8 @@ Use it as the improvement backlog for the next polish pass.
 - `CI Build Push` succeeded on `main`
 - the workflow path itself is valid for test and publish stages
 
+These workflow names reflect the earlier CI/CD shape at the time of that validation pass. The current repository now uses `PR CI`, `Publish Image`, and `Deploy Production`.
+
 ### Remaining Gaps
 
 #### 6. `deploy-vm.yml` had a workflow parser defect

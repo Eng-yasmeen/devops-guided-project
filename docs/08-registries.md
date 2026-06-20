@@ -10,6 +10,19 @@ For the main guided path:
 - deploy that image to the VM
 - use Azure Key Vault or GitHub Secrets to provide the runtime secrets needed during deployment
 
+## Tagging Strategy In This Project
+
+The guided path uses two tag styles:
+
+- `latest`
+  - a convenience tag for the most recent publish from `main`
+  - useful for quick inspection, but not the preferred production deployment tag
+- `sha-<short-sha>`
+  - an immutable tag tied to one Git commit
+  - the preferred tag for deployment, validation, and rollback
+
+For trainee work, treat `sha-<short-sha>` as the trustworthy deployment tag because it is easy to trace back to the exact commit and CI run.
+
 ## Azure ACR
 
 Use when:
@@ -32,7 +45,7 @@ Secrets:
 
 Student verification:
 
-- check the `CI Build Push` workflow logs for the final image names
+- check the `Publish Image` workflow logs for the final image names
 - check the ACR repository tags for `latest` and `sha-<short-sha>`
 
 Login example:
@@ -77,7 +90,7 @@ Secrets:
 
 Student verification:
 
-- check the `CI Build Push` workflow logs for the final image names
+- check the `Publish Image` workflow logs for the final image names
 - check the repository package page for `latest` and `sha-<short-sha>` tags
 
 Login example:

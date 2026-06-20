@@ -73,6 +73,15 @@ Run:
 bash scripts/validate-observability.sh
 ```
 
+## Known Good End State
+
+- Running: Prometheus and Grafana are reachable and the dashboard panels move after traffic.
+- Endpoint: `/slow`, `/error`, and `/ready` all create metric changes you can see.
+- Confirm with: `bash scripts/validate-observability.sh`
+- Expected logs: logs still show the request-level detail that explains the metric change.
+- Common failure: the dashboard looks static because only one request was sent or no new traffic was generated.
+- Safe retry: generate `/slow` a few times, trigger `/error`, then refresh the dashboard range
+
 ## Next Step
 
 Continue to [LAB-06 GitHub Actions ACR](LAB-06-github-actions-acr.md).

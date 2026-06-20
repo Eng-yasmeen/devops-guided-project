@@ -59,6 +59,36 @@ If you are opening the repository for the first time, use this order:
 12. [Troubleshooting](docs/11-troubleshooting.md)
 13. [Trainee Validation Findings](docs/12-trainee-validation-findings.md)
 
+## Create Your Own Working Copy
+
+This repository is meant to be used as a public course template.
+
+Do not do your hands-on work directly in the shared template repository.
+
+Recommended trainee path:
+
+1. Open the template repository on GitHub.
+2. Select `Use this template`.
+3. Create a new repository in your own GitHub account or team space.
+4. Choose the visibility that matches your class or company rules.
+5. Clone your own repository copy locally.
+6. Add your own GitHub Secrets, Azure secrets, and VM settings to your repository, not to the shared template.
+7. Do all lab work on feature branches in your own repository.
+
+Example:
+
+```bash
+git clone https://github.com/<your-account>/devops-guided-project.git
+cd devops-guided-project
+git checkout -b feature/lab-work
+```
+
+Why this matters:
+
+- each trainee or team gets an isolated place to store secrets and workflow history
+- CI/CD runs belong to the trainee repository that owns the environment
+- the public template stays clean and reusable for future classes
+
 ## System Summary
 
 At a high level:
@@ -109,7 +139,7 @@ For the detailed explanation, read [Architecture](docs/02-architecture.md).
 ├── deploy/                      # VM setup and deployment scripts
 ├── docs/                        # Ordered documentation set
 ├── labs/                        # Guided workshop labs
-├── instructor/                  # Instructor notes and timing
+├── instructor/                  # Local instructor-only notes, not part of the public trainee template
 ├── logs/                        # Host-side app and Nginx logs
 ├── scripts/                     # Validation and helper scripts
 ├── docker-compose.yml           # Local training stack
@@ -133,6 +163,8 @@ For the detailed explanation, read [Architecture](docs/02-architecture.md).
 ## Setup
 
 Start with [Prerequisites and Validation](docs/01-prerequisites-and-validation.md).
+
+If you are a trainee, create your own GitHub copy from the template before you start the labs.
 
 If you want the short version:
 
@@ -172,19 +204,50 @@ These scripts are part of the expected workflow, not optional extras.
 - `bash scripts/validate-local-stack.sh`
 - `bash scripts/validate-observability.sh`
 - `bash scripts/validate-vm-deployment.sh http://YOUR_VM_OR_LOCAL_URL`
+- `bash scripts/validate-runtime-contract.sh local`
+- `bash scripts/validate-runtime-contract.sh vm http://127.0.0.1`
+- `bash scripts/validate-doc-journey.sh`
 - `bash scripts/validate-project.sh`
+
+Use the runtime contract validator only after the matching local or VM stack is already running.
+
+Reset helpers for safe retries:
+
+- `bash scripts/reset-local-lab.sh`
+- `bash scripts/reset-vm-lab.sh`
 
 ## CI/CD Flow
 
-The repository includes two main workflows:
+The repository now uses a simple production-like delivery model:
 
-- `.github/workflows/ci-build-push.yml`
-  - pull request: test only
-  - push to `main`: test, build, and publish the app image to ACR
-- `.github/workflows/deploy-vm.yml`
-  - manual deploy of a selected image tag to the Ubuntu VM
-  - Azure Key Vault preferred for runtime secrets
-  - GitHub Secrets fallback when Key Vault is not ready
+1. work happens on a feature branch
+2. open a pull request into `main`
+3. GitHub Actions runs required PR CI checks
+4. merge into `main` only after CI passes
+5. GitHub Actions builds and publishes the app image to ACR
+6. the production deploy waits for GitHub Environment approval
+7. the VM deploys the immutable `sha-<short-sha>` image tag
+
+The workflows are:
+
+- `.github/workflows/ci.yml`
+  - runs on pull requests into `main`
+  - tests the app
+  - validates the documentation journey and static runtime contract
+  - runs a lightweight dependency security scan
+  - validates workflow, shell, and Compose syntax
+- `.github/workflows/publish-image.yml`
+  - runs on push to `main`
+  - reruns the essential validation path
+  - builds and publishes the app image to ACR
+  - pushes both `latest` and `sha-<short-sha>` tags
+  - runs a lightweight image vulnerability scan
+- `.github/workflows/deploy-production.yml`
+  - starts automatically after a successful publish from `main`
+  - pauses at the `production` environment approval gate
+  - deploys the selected image to the Ubuntu VM
+  - can also be run manually for rollback or recovery
+  - requires an explicit image tag when run manually so rollback stays intentional
 
 Related reading:
 
@@ -192,16 +255,43 @@ Related reading:
 - [Azure Key Vault and Secrets Flow](docs/09-secrets-and-azure-key-vault.md)
 - [VM Deployment](docs/10-vm-deployment.md)
 
+### Branch Protection Model
+
+Treat `main` as the production-ready branch.
+
+- do day-to-day work on feature branches
+- open pull requests into `main`
+- require the PR CI workflow to pass before merge
+- deploy only code that has already been merged into `main`
+
+Recommended GitHub branch protection settings for instructors:
+
+- require a pull request before merging
+- require these status checks to pass:
+  - `test-and-validate`
+  - `dependency-scan`
+  - `workflow-and-compose-check`
+- require at least one approval when repository permissions allow it
+- require branches to be up to date before merging
+- block direct pushes to `main`
+- restrict force pushes
+- restrict branch deletion
+- optionally require conversation resolution
+- review admin bypass carefully instead of leaving it on by habit
+- optionally prefer squash merge to keep the trainee history simple
+
 ## VM Deployment Summary
 
 The VM deployment path is intentionally simple:
 
 1. prepare the VM with `deploy/vm-setup.sh`
 2. provide `.env` and runtime secrets
-3. pull the published app image from ACR
-4. start the VM stack with `docker-compose.vm.yml`
-5. validate `/health`, `/ready`, and `/version`
-6. use an SSH tunnel for Grafana on the VM
+3. wait for the image to be published from `main`
+4. approve the `production` environment deploy
+5. pull the published app image from ACR
+6. start the VM stack with `docker-compose.vm.yml`
+7. validate `/health`, `/ready`, and `/version`
+8. use an SSH tunnel for Grafana on the VM
 
 If you need to copy the source to the VM from a workstation instead of cloning it there, use:
 
@@ -210,6 +300,14 @@ bash scripts/package-vm-source.sh
 ```
 
 That helper avoids macOS metadata files that can break Linux-side provisioning.
+
+For a simple rollback to a previously known good image tag, use:
+
+```bash
+bash deploy/rollback.sh sha-<known-good-sha-tag>
+```
+
+The VM never rebuilds the application. It only pulls a published image tag that can be traced back to a Git commit and CI run.
 
 ## Labs
 

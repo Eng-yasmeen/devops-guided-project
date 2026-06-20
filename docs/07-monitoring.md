@@ -50,6 +50,14 @@ Logs answer questions like:
 - Did readiness fall when Redis or PostgreSQL was unavailable?
 - Which logs explain the metric change I just saw?
 
+Useful dashboard panels in this project:
+
+- request rate by path
+- error rate by path
+- HTTP 500 rate by path
+- readiness over time
+- slow request latency P95 by path
+
 ## Metrics And Logs Together
 
 Students should learn one simple sequence:

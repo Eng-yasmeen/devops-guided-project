@@ -91,6 +91,15 @@ Before LAB-01, complete the prerequisite validator:
 bash scripts/validate-prerequisites.sh
 ```
 
+## Known Good End State
+
+- Running: no project services need to be running yet.
+- Endpoint: not applicable in this lab because this step is about understanding the system before execution.
+- Confirm with: `bash scripts/validate-prerequisites.sh`
+- Expected output: students can explain the system story and identify the public entry point, app, database, cache, logs, metrics, and deployment path.
+- Common failure: students skip the architecture reading and jump straight into commands.
+- Safe retry: reopen [README](../README.md), [02-architecture](../docs/02-architecture.md), and [03-runtime-stack](../docs/03-runtime-stack.md), then restate the request and system flow in one sentence.
+
 ## Next Step
 
 Read [Architecture](../docs/02-architecture.md), then continue to [LAB-01 Run Locally and Use GUI](LAB-01-run-locally-and-use-gui.md).

@@ -74,6 +74,15 @@ Re-run:
 bash scripts/validate-local-stack.sh
 ```
 
+## Known Good End State
+
+- Running: `nginx` stays healthy and is the only public entry point.
+- Endpoint: `http://localhost:8080/version` responds through Nginx, not a direct app port.
+- Confirm with: `docker compose logs nginx --tail=20`
+- Expected logs: Nginx access logs show the request path and response status for GUI traffic.
+- Common failure: students use port `3000` directly and skip the reverse proxy path.
+- Safe retry: return to `http://localhost:8080`, repeat one GUI action, then inspect `logs/nginx/access.log`
+
 ## Next Step
 
 Read [Logging](../docs/06-logging.md), then continue to [LAB-04 Logging Dashboard](LAB-04-logging-dashboard.md).

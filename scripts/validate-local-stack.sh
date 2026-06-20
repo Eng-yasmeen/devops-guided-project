@@ -52,14 +52,22 @@ if COMPOSE_CMD="$(compose_cmd)"; then
     pass "Compose services are inspectable."
   else
     fail "Compose services are not inspectable. Start the stack before running this check."
+    echo "Run: cp .env.example .env && docker compose up --build"
+    echo "Then rerun: bash scripts/validate-local-stack.sh"
+    exit "${EXIT_CODE}"
   fi
 else
   fail "Docker Compose is not available."
+  echo "Fix prerequisites first with: bash scripts/validate-prerequisites.sh"
+  exit "${EXIT_CODE}"
 fi
 
 health_json="$(http_json /health)" || {
   fail "GET /health did not succeed."
+  echo "The local stack does not appear to be running at ${BASE_URL}."
+  echo "Start it with: docker compose up --build"
   health_json=""
+  exit "${EXIT_CODE}"
 }
 
 if [[ -n "${health_json}" ]] && require_json_key "${health_json}" "status"; then

@@ -23,16 +23,29 @@ if curl -fsS "${PROMETHEUS_URL}/-/ready" >/dev/null; then
   pass "Prometheus readiness endpoint is reachable."
 else
   fail "Prometheus readiness endpoint is not reachable."
+  echo "Start the local stack first, then rerun this script."
+  exit "${EXIT_CODE}"
 fi
 
 if curl -fsS "${GRAFANA_URL}/api/health" >/dev/null; then
   pass "Grafana health endpoint is reachable."
 else
   fail "Grafana health endpoint is not reachable."
+  echo "Start the local stack first, then rerun this script."
+  exit "${EXIT_CODE}"
 fi
 
-curl -fsS "${APP_URL}/health" >/dev/null || fail "Could not generate /health traffic."
-curl -fsS "${APP_URL}/slow" >/dev/null || fail "Could not generate /slow traffic."
+curl -fsS "${APP_URL}/health" >/dev/null || {
+  fail "Could not generate /health traffic."
+  echo "Confirm the app is reachable at ${APP_URL} before validating observability."
+  exit "${EXIT_CODE}"
+}
+
+curl -fsS "${APP_URL}/slow" >/dev/null || {
+  fail "Could not generate /slow traffic."
+  echo "Confirm the app is reachable at ${APP_URL} before validating observability."
+  exit "${EXIT_CODE}"
+}
 curl -sS "${APP_URL}/error" >/dev/null || true
 
 if [[ -s "${PROJECT_DIR}/logs/app/app.log" ]]; then

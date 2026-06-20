@@ -39,11 +39,15 @@ If Docker is already running on Linux but `docker ps` still fails, add your user
 - confirm `app/package.json` and lockfile are in sync
 - confirm `REGISTRY_LOGIN_SERVER`, `REGISTRY_USERNAME`, and `REGISTRY_PASSWORD` are set
 - confirm the workflow ran on the branch you expected
-- confirm whether the run was a PR validation path or a `main` publish path
+- confirm whether the run was the `PR CI` workflow or the `Publish Image` workflow
+- if the PR is blocked, check which required status check failed:
+  - `test-and-validate`
+  - `dependency-scan`
+  - `workflow-and-compose-check`
 
 ## VM Deploy Fails
 
-- rerun `bash deploy/deploy.sh latest`
+- rerun `bash deploy/deploy.sh sha-<known-good-short-sha>`
 - inspect:
   - `docker compose -f docker-compose.vm.yml logs app --tail=50`
   - `docker compose -f docker-compose.vm.yml logs nginx --tail=50`
@@ -57,6 +61,7 @@ If the GitHub-hosted deploy workflow fails before the SSH connection starts:
 - confirm `VM_HOST`, `VM_USER`, and `VM_APP_DIR` exist in GitHub Secrets
 - confirm `VM_SSH_KEY_B64` was created from the PEM file content, not from the file path
 - if you stored `VM_SSH_KEY` instead, make sure the secret contains the full multi-line private key text
+- confirm the `production` environment approval was granted if the workflow is waiting
 - rerun the workflow and check whether the failure happened during key validation or during the SSH connection step
 
 ## Observability Shortcut Confusion
@@ -83,6 +88,18 @@ If the GitHub-hosted deploy workflow fails before the SSH connection starts:
   - `find . -name '.DS_Store' -delete`
   - `docker compose restart grafana`
 - for the next transfer, create the VM source archive with `bash scripts/package-vm-source.sh`
+
+## Safe Reset Commands
+
+If the local lab state is too messy to reason about:
+
+- `bash scripts/reset-local-lab.sh`
+
+If the VM project state is too messy to reason about:
+
+- `bash scripts/reset-vm-lab.sh`
+
+Use these only for the guided-project stack, not as a general Docker cleanup habit.
 
 ## Next Step
 

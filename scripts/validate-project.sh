@@ -52,8 +52,9 @@ fi
 for path in \
   "docker-compose.yml" \
   "docker-compose.vm.yml" \
-  ".github/workflows/ci-build-push.yml" \
-  ".github/workflows/deploy-vm.yml" \
+  ".github/workflows/ci.yml" \
+  ".github/workflows/publish-image.yml" \
+  ".github/workflows/deploy-production.yml" \
   "docs/00-documentation-guide.md" \
   "docs/01-prerequisites-and-validation.md" \
   "docs/09-secrets-and-azure-key-vault.md" \
@@ -66,7 +67,12 @@ for path in \
   "scripts/validate-local-stack.sh" \
   "scripts/validate-observability.sh" \
   "scripts/validate-vm-deployment.sh" \
+  "scripts/validate-doc-journey.sh" \
+  "scripts/validate-runtime-contract.sh" \
+  "scripts/reset-local-lab.sh" \
+  "scripts/reset-vm-lab.sh" \
   "scripts/package-vm-source.sh" \
+  "deploy/rollback.sh" \
   "monitoring/grafana/provisioning/datasources/datasources.yml" \
   "monitoring/grafana/provisioning/dashboards/dashboards.yml" \
   "monitoring/prometheus/prometheus.yml" \
@@ -88,8 +94,9 @@ if command -v ruby >/dev/null 2>&1; then
   ' \
     "${PROJECT_DIR}/docker-compose.yml" \
     "${PROJECT_DIR}/docker-compose.vm.yml" \
-    "${PROJECT_DIR}/.github/workflows/ci-build-push.yml" \
-    "${PROJECT_DIR}/.github/workflows/deploy-vm.yml" \
+    "${PROJECT_DIR}/.github/workflows/ci.yml" \
+    "${PROJECT_DIR}/.github/workflows/publish-image.yml" \
+    "${PROJECT_DIR}/.github/workflows/deploy-production.yml" \
     "${PROJECT_DIR}/monitoring/prometheus/prometheus.yml" \
     "${PROJECT_DIR}/monitoring/promtail/promtail-config.yml" \
     "${PROJECT_DIR}/monitoring/grafana/provisioning/datasources/datasources.yml" \
@@ -132,8 +139,8 @@ else
   pass "No hardcoded localhost observability shortcuts remain in the GUI."
 fi
 
-if search_file 'uses: azure/login@v1' "${PROJECT_DIR}/.github/workflows/deploy-vm.yml" \
-  && search_file 'uses: azure/CLI@v1' "${PROJECT_DIR}/.github/workflows/deploy-vm.yml"; then
+if search_file 'uses: azure/login@v1' "${PROJECT_DIR}/.github/workflows/deploy-production.yml" \
+  && search_file 'uses: azure/CLI@v1' "${PROJECT_DIR}/.github/workflows/deploy-production.yml"; then
   pass "Deploy workflow includes Azure login and Azure Key Vault retrieval steps."
 else
   fail "Deploy workflow is missing the expected Azure login or Azure Key Vault retrieval steps."

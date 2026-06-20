@@ -175,7 +175,49 @@
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "targets": [
+        {
+          "expr": "app_ready_status",
+          "legendFormat": "app",
+          "refId": "A"
+        },
+        {
+          "expr": "db_ready_status",
+          "legendFormat": "database",
+          "refId": "B"
+        },
+        {
+          "expr": "redis_ready_status",
+          "legendFormat": "redis",
+          "refId": "C"
+        }
+      ],
+      "title": "Readiness Over Time",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "targets": [
+        {
+          "expr": "sum(rate(http_errors_total{status_code=\"500\"}[5m])) by (path)",
+          "legendFormat": "{{path}}",
+          "refId": "A"
+        }
+      ],
+      "title": "HTTP 500 Rate by Path",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 24 },
       "targets": [
         {
           "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, path))",
@@ -183,7 +225,7 @@
           "refId": "A"
         }
       ],
-      "title": "Latency P95 by Path",
+      "title": "Slow Request Latency P95 by Path",
       "type": "timeseries"
     }
   ],
@@ -200,6 +242,6 @@
   },
   "title": "DevOps Guided Project Overview",
   "uid": "devops-guided-project-overview",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }

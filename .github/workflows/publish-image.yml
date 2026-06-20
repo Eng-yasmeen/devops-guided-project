@@ -1,7 +1,6 @@
-name: CI Build Push
+name: Publish Image
 
 on:
-  pull_request:
   push:
     branches:
       - main
@@ -11,7 +10,8 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  test-and-validate:
+    name: publish-test-and-validate
     runs-on: ubuntu-latest
 
     steps:
@@ -22,18 +22,26 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
+          cache-dependency-path: app/package-lock.json
 
       - name: Install app dependencies
         working-directory: app
         run: npm ci
 
-      - name: Run tests
+      - name: Run app tests
         working-directory: app
         run: npm test
 
-  build-and-push:
-    if: github.event_name != 'pull_request'
-    needs: test
+      - name: Validate documentation journey
+        run: bash scripts/validate-doc-journey.sh
+
+      - name: Validate static runtime contract
+        run: bash scripts/validate-runtime-contract.sh static
+
+  build-push-and-scan:
+    name: build-push-and-scan
+    needs: test-and-validate
     runs-on: ubuntu-latest
     env:
       REGISTRY_LOGIN_SERVER: ${{ secrets.REGISTRY_LOGIN_SERVER }}
@@ -73,7 +81,7 @@ jobs:
           username: ${{ env.REGISTRY_USERNAME }}
           password: ${{ env.REGISTRY_PASSWORD }}
 
-      - name: Create short SHA tag
+      - name: Create image tags
         id: image-tags
         run: echo "short_sha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
 
@@ -87,8 +95,18 @@ jobs:
             ${{ env.IMAGE_NAME }}:latest
             ${{ env.IMAGE_NAME }}:sha-${{ steps.image-tags.outputs.short_sha }}
 
+      - name: Scan published image
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: ${{ env.IMAGE_NAME }}:sha-${{ steps.image-tags.outputs.short_sha }}
+          format: table
+          vuln-type: os,library
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: 1
+
       - name: Show pushed image names
         run: |
-          echo "Pushed image:"
+          echo "Published images:"
           echo "${IMAGE_NAME}:latest"
           echo "${IMAGE_NAME}:sha-${{ steps.image-tags.outputs.short_sha }}"

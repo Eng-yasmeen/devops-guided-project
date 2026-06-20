@@ -2,6 +2,14 @@
 
 This project deploys to one Ubuntu VM with Docker Compose.
 
+The VM deployment is intentionally image-based only:
+
+1. GitHub Actions validates the change in a pull request
+2. merge to `main` publishes the app image to ACR
+3. the deploy workflow waits for `production` environment approval
+4. the VM pulls the selected image tag
+5. the VM never rebuilds the application
+
 ## Runtime Configuration Model
 
 Keep non-secret VM settings in `.env`.
@@ -64,6 +72,11 @@ Store these GitHub Secrets:
 
 The deploy workflow passes them to `deploy/deploy.sh`, which writes `.env.secrets` on the VM automatically during deployment.
 
+The VM deployment workflow is `.github/workflows/deploy-production.yml`.
+
+- automatic path: runs after `Publish Image` succeeds on `main`
+- manual path: `workflow_dispatch` for rollback, recovery, or instructor demos
+
 ## Public and Private Services
 
 Public by default:
@@ -93,6 +106,8 @@ That validation confirms:
 - `/ready`
 - `/version` deployment metadata
 
+The `/version` response should match the published image metadata so students can trace the running VM back to a commit and image tag.
+
 If you used the same Linux machine earlier for the local training stack, stop that stack before the VM deployment path so ports `80`, `3000`, and `9090` are free for the VM runtime layout:
 
 ```bash
@@ -107,9 +122,15 @@ If you need the source-copy path, create a clean archive from your workstation f
 bash scripts/package-vm-source.sh
 ```
 
+If you need to redeploy a previously known good image tag, use:
+
+```bash
+bash deploy/rollback.sh sha-<known-good-sha-tag>
+```
+
 ## Next Step
 
-After deployment is working, move to [LAB-08 Failure and Recovery](../labs/LAB-08-failure-and-recovery.md).
+After deployment is working, review [Troubleshooting](11-troubleshooting.md), then move to [LAB-08 Failure and Recovery](../labs/LAB-08-failure-and-recovery.md).
 
 ## SSH Tunnel for Grafana
 

@@ -101,6 +101,30 @@ Example with `GET /slow`:
 8. check the matching Nginx access log entry
 9. confirm the latency spike in Grafana
 
+## Request ID Correlation
+
+The request ID is the simplest way to follow one user action across the stack.
+
+Where it appears:
+
+- in the GUI response panel
+- in the `X-Request-Id` response header
+- in the structured app log lines for that request
+
+How to use it:
+
+1. trigger one GUI action
+2. copy the `request_id`
+3. search the app logs for that value
+4. confirm the sequence of `request started`, route-specific logs, and `request completed` or `request failed`
+5. compare the timestamp and path with the matching Nginx access log entry
+
+What this teaches:
+
+- metrics can show that latency or errors changed
+- the request ID helps you identify which exact request explains that change
+- this is close to real production debugging, where one request often needs to be followed across several signals
+
 ## Component Roles During Log Investigation
 
 - browser tells you which action was triggered

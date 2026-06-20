@@ -97,6 +97,15 @@ Run:
 bash scripts/validate-local-stack.sh
 ```
 
+## Known Good End State
+
+- Running: `postgres`, `redis`, `app`, and `nginx` are healthy in `docker compose ps`.
+- Endpoint: `http://localhost:8080/health` returns a healthy JSON response.
+- Confirm with: `bash scripts/validate-local-stack.sh`
+- Expected logs: `docker compose logs nginx --tail=20` shows `GET /health` after the GUI check.
+- Common failure: Docker is not running or `.env` is missing.
+- Safe retry: `bash scripts/reset-local-lab.sh --yes` then `cp .env.example .env && docker compose up --build`
+
 ## Next Step
 
 Continue to [LAB-02 Compose Layers DB Cache](LAB-02-compose-layers-db-cache.md).

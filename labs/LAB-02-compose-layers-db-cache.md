@@ -80,6 +80,15 @@ Re-run:
 bash scripts/validate-local-stack.sh
 ```
 
+## Known Good End State
+
+- Running: `postgres` and `redis` are healthy and the app remains healthy.
+- Endpoint: `http://localhost:8080/ready` returns `db_ready` and `redis_ready`.
+- Confirm with: `bash scripts/validate-local-stack.sh`
+- Expected logs: `docker compose logs postgres --tail=20` and `docker compose logs redis --tail=20` show recent activity after GUI actions.
+- Common failure: students click before PostgreSQL or Redis is fully healthy.
+- Safe retry: wait for `docker compose ps`, then rerun `Load Items`, `Test Redis Cache`, and `Check Readiness`
+
 ## Next Step
 
 Continue to [LAB-03 Nginx Reverse Proxy](LAB-03-nginx-reverse-proxy.md).

@@ -4,6 +4,14 @@ This guided project uses **Azure Key Vault** as the primary runtime secret sourc
 
 GitHub Secrets remain the fallback path so classes can still complete the project if Azure Key Vault is not ready yet.
 
+This secret flow sits inside a production-like CI/CD path:
+
+1. a feature branch opens a pull request into `main`
+2. PR CI validates the change without publishing or deploying
+3. merge to `main` publishes the image to ACR
+4. the production deploy waits for GitHub Environment approval
+5. the deploy workflow reads runtime secrets and deploys the selected image tag
+
 ## Why This Matters
 
 The app needs runtime values such as:
@@ -45,6 +53,8 @@ This keeps the training path unblocked while still teaching the preferred cloud 
 - `AZURE_SUBSCRIPTION_ID`
 - `AZURE_KEYVAULT_NAME`
 
+These are used by `.github/workflows/deploy-production.yml`.
+
 ## GitHub Secrets Kept As Fallback
 
 - `POSTGRES_PASSWORD`
@@ -52,6 +62,8 @@ This keeps the training path unblocked while still teaching the preferred cloud 
 - `REGISTRY_LOGIN_SERVER`
 - `REGISTRY_USERNAME`
 - `REGISTRY_PASSWORD`
+
+These values let the deployment continue even if Azure Key Vault is not ready yet.
 
 ## Required Azure Key Vault Secret Names
 
@@ -76,6 +88,9 @@ Typical requirement:
 Students should leave with this mental model:
 
 - application configuration is split into non-secret and secret values
+- branch protection and PR CI decide what is safe to merge
+- image publish happens after merge, not during the pull request
+- deployment approval is separate from build completion
 - GitHub Actions can retrieve secrets from a cloud secret manager
 - a fallback path can keep delivery moving without changing the app itself
 - VM access secrets are separate from runtime app secrets, and both must be configured for the deploy workflow to succeed
