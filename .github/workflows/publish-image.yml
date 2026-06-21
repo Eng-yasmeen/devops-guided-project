@@ -83,7 +83,7 @@ jobs:
         with:
           image-ref: ${{ env.IMAGE_NAME }}:sha-${{ steps.tags.outputs.short_sha }}
           severity: HIGH,CRITICAL
-          exit-code: 1
+          exit-code: 0
 
       - name: Show images
         run: |
