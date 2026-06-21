@@ -6,27 +6,69 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
+  test-and-validate:
+    name: test-and-validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - run: npm ci
+        working-directory: app
+
+      - run: npm test
+        working-directory: app
+
+      - run: bash scripts/validate-doc-journey.sh
+      - run: bash scripts/validate-runtime-contract.sh static
+
+
   build-push-and-scan:
+    name: build-push-and-scan
+    needs: test-and-validate
     runs-on: ubuntu-latest
 
     env:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
       IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/devops-mini-app
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Login to Docker Hub
+      - name: Validate DockerHub secrets
+        run: |
+          set -euo pipefail
+          for key in DOCKERHUB_USERNAME DOCKERHUB_TOKEN; do
+            if [ -z "${!key:-}" ]; then
+              echo "Missing secret: $key"
+              exit 1
+            fi
+          done
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Login to DockerHub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ env.DOCKERHUB_TOKEN }}
 
-      - name: Get SHA
-        id: vars
-        run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      - name: Generate short SHA
+        id: tags
+        run: echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
-      - name: Build and push
+      - name: Build and push image
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -34,13 +76,12 @@ jobs:
           push: true
           tags: |
             ${{ env.IMAGE_NAME }}:latest
-            ${{ env.IMAGE_NAME }}:sha-${{ steps.vars.outputs.sha }}
+            ${{ env.IMAGE_NAME }}:sha-${{ steps.tags.outputs.short_sha }}
 
       - name: Scan image
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: ${{ env.IMAGE_NAME }}:sha-${{ steps.vars.outputs.sha }}
-          format: table
+          image-ref: ${{ env.IMAGE_NAME }}:sha-${{ steps.tags.outputs.short_sha }}
           severity: HIGH,CRITICAL
           exit-code: 1
 
@@ -48,4 +89,4 @@ jobs:
         run: |
           echo "Pushed:"
           echo "${IMAGE_NAME}:latest"
-          echo "${IMAGE_NAME}:sha-${{ steps.vars.outputs.sha }}"
+          echo "${IMAGE_NAME}:sha-${{ steps.tags.outputs.short_sha }}"
