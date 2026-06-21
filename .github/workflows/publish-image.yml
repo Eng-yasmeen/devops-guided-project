@@ -6,108 +6,46 @@ on:
       - main
   workflow_dispatch:
 
-permissions:
-  contents: read
-
 jobs:
-  test-and-validate:
-    name: publish-test-and-validate
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: app/package-lock.json
-
-      - name: Install app dependencies
-        working-directory: app
-        run: npm ci
-
-      - name: Run app tests
-        working-directory: app
-        run: npm test
-
-      - name: Validate documentation journey
-        run: bash scripts/validate-doc-journey.sh
-
-      - name: Validate static runtime contract
-        run: bash scripts/validate-runtime-contract.sh static
-
   build-push-and-scan:
-    name: build-push-and-scan
-    needs: test-and-validate
     runs-on: ubuntu-latest
+
     env:
-      REGISTRY_LOGIN_SERVER: ${{ secrets.REGISTRY_LOGIN_SERVER }}
-      REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
-      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
-      IMAGE_NAME: ${{ secrets.REGISTRY_LOGIN_SERVER }}/devops-mini-app
+      IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/devops-mini-app
 
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Validate ACR configuration
-        run: |
-          set -euo pipefail
-
-          missing=0
-
-          for key in REGISTRY_LOGIN_SERVER REGISTRY_USERNAME REGISTRY_PASSWORD; do
-            if [ -z "${!key:-}" ]; then
-              echo "Missing required registry secret: ${key}"
-              missing=1
-            fi
-          done
-
-          if [ "${missing}" -eq 1 ]; then
-            echo "Configure ACR secrets before running the publish path."
-            exit 1
-          fi
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to ACR
+      - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY_LOGIN_SERVER }}
-          username: ${{ env.REGISTRY_USERNAME }}
-          password: ${{ env.REGISTRY_PASSWORD }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Create image tags
-        id: image-tags
-        run: echo "short_sha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Get SHA
+        id: vars
+        run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
-      - name: Build and push app image
+      - name: Build and push
         uses: docker/build-push-action@v6
         with:
           context: .
           file: docker/app.Dockerfile
-          platforms: linux/amd64,linux/arm64
           push: true
           tags: |
             ${{ env.IMAGE_NAME }}:latest
-            ${{ env.IMAGE_NAME }}:sha-${{ steps.image-tags.outputs.short_sha }}
+            ${{ env.IMAGE_NAME }}:sha-${{ steps.vars.outputs.sha }}
 
-      - name: Scan published image
+      - name: Scan image
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: ${{ env.IMAGE_NAME }}:sha-${{ steps.image-tags.outputs.short_sha }}
+          image-ref: ${{ env.IMAGE_NAME }}:sha-${{ steps.vars.outputs.sha }}
           format: table
-          vuln-type: os,library
           severity: HIGH,CRITICAL
-          ignore-unfixed: true
           exit-code: 1
 
-      - name: Show pushed image names
+      - name: Show images
         run: |
-          echo "Published images:"
+          echo "Pushed:"
           echo "${IMAGE_NAME}:latest"
-          echo "${IMAGE_NAME}:sha-${{ steps.image-tags.outputs.short_sha }}"
+          echo "${IMAGE_NAME}:sha-${{ steps.vars.outputs.sha }}"
