@@ -11,9 +11,7 @@ permissions:
 
 jobs:
   test-and-validate:
-    name: test-and-validate
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
@@ -34,19 +32,18 @@ jobs:
 
 
   build-push-and-scan:
-    name: build-push-and-scan
     needs: test-and-validate
     runs-on: ubuntu-latest
 
     env:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-      IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/devops-mini-app
+      IMAGE_REPO: ${{ secrets.DOCKERHUB_USERNAME }}/devops-mini-app
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Validate DockerHub secrets
+      - name: Validate secrets
         run: |
           set -euo pipefail
           for key in DOCKERHUB_USERNAME DOCKERHUB_TOKEN; do
@@ -75,18 +72,18 @@ jobs:
           file: docker/app.Dockerfile
           push: true
           tags: |
-            ${{ env.IMAGE_NAME }}:latest
-            ${{ env.IMAGE_NAME }}:sha-${{ steps.tags.outputs.short_sha }}
+            ${{ env.IMAGE_REPO }}:latest
+            ${{ env.IMAGE_REPO }}:sha-${{ steps.tags.outputs.short_sha }}
 
       - name: Scan image
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: ${{ env.IMAGE_NAME }}:sha-${{ steps.tags.outputs.short_sha }}
+          image-ref: ${{ env.IMAGE_REPO }}:sha-${{ steps.tags.outputs.short_sha }}
           severity: HIGH,CRITICAL
           exit-code: 0
 
       - name: Show images
         run: |
           echo "Pushed:"
-          echo "${IMAGE_NAME}:latest"
-          echo "${IMAGE_NAME}:sha-${{ steps.tags.outputs.short_sha }}"
+          echo "${IMAGE_REPO}:latest"
+          echo "${IMAGE_REPO}:sha-${{ steps.tags.outputs.short_sha }}"
