@@ -1,4 +1,4 @@
-# DevOps Guided Project
+# DevOps Guided Project [Updated from taha]
 
 This repository is a guided, hands-on DevOps project for junior engineers. The application is intentionally small. The main learning goal is to understand how a service moves through a practical delivery path:
 
